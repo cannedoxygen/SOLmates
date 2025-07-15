@@ -1,0 +1,289 @@
+.class final Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;
+.super Lkotlin/coroutines/jvm/internal/SuspendLambda;
+.source "BitmapCroppingWorkerJob.kt"
+
+# interfaces
+.implements Lkotlin/jvm/functions/Function2;
+
+
+# annotations
+.annotation system Ldalvik/annotation/EnclosingMethod;
+    value = Lcom/canhub/cropper/BitmapCroppingWorkerJob;->onPostExecute(Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+.end annotation
+
+.annotation system Ldalvik/annotation/InnerClass;
+    accessFlags = 0x18
+    name = null
+.end annotation
+
+.annotation system Ldalvik/annotation/Signature;
+    value = {
+        "Lkotlin/coroutines/jvm/internal/SuspendLambda;",
+        "Lkotlin/jvm/functions/Function2<",
+        "Lkotlinx/coroutines/CoroutineScope;",
+        "Lkotlin/coroutines/Continuation<",
+        "-",
+        "Lkotlin/Unit;",
+        ">;",
+        "Ljava/lang/Object;",
+        ">;"
+    }
+.end annotation
+
+.annotation runtime Lkotlin/Metadata;
+    d1 = {
+        "\u0000\n\n\u0000\n\u0002\u0010\u0002\n\u0002\u0018\u0002\u0010\u0000\u001a\u00020\u0001*\u00020\u0002H\u008a@"
+    }
+    d2 = {
+        "<anonymous>",
+        "",
+        "Lkotlinx/coroutines/CoroutineScope;"
+    }
+    k = 0x3
+    mv = {
+        0x1,
+        0x7,
+        0x1
+    }
+    xi = 0x30
+.end annotation
+
+.annotation runtime Lkotlin/coroutines/jvm/internal/DebugMetadata;
+    c = "com.canhub.cropper.BitmapCroppingWorkerJob$onPostExecute$2"
+    f = "BitmapCroppingWorkerJob.kt"
+    i = {}
+    l = {}
+    m = "invokeSuspend"
+    n = {}
+    s = {}
+.end annotation
+
+
+# instance fields
+.field final synthetic $result:Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;
+
+.field private synthetic L$0:Ljava/lang/Object;
+
+.field label:I
+
+.field final synthetic this$0:Lcom/canhub/cropper/BitmapCroppingWorkerJob;
+
+
+# direct methods
+.method constructor <init>(Lcom/canhub/cropper/BitmapCroppingWorkerJob;Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;Lkotlin/coroutines/Continuation;)V
+    .locals 1
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(",
+            "Lcom/canhub/cropper/BitmapCroppingWorkerJob;",
+            "Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;",
+            "Lkotlin/coroutines/Continuation<",
+            "-",
+            "Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;",
+            ">;)V"
+        }
+    .end annotation
+
+    iput-object p1, p0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->this$0:Lcom/canhub/cropper/BitmapCroppingWorkerJob;
+
+    iput-object p2, p0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->$result:Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;
+
+    const/4 v0, 0x2
+
+    invoke-direct {p0, v0, p3}, Lkotlin/coroutines/jvm/internal/SuspendLambda;-><init>(ILkotlin/coroutines/Continuation;)V
+
+    return-void
+.end method
+
+
+# virtual methods
+.method public final create(Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Lkotlin/coroutines/Continuation;
+    .locals 3
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(",
+            "Ljava/lang/Object;",
+            "Lkotlin/coroutines/Continuation<",
+            "*>;)",
+            "Lkotlin/coroutines/Continuation<",
+            "Lkotlin/Unit;",
+            ">;"
+        }
+    .end annotation
+
+    new-instance v0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;
+
+    iget-object v1, p0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->this$0:Lcom/canhub/cropper/BitmapCroppingWorkerJob;
+
+    iget-object v2, p0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->$result:Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;
+
+    invoke-direct {v0, v1, v2, p2}, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;-><init>(Lcom/canhub/cropper/BitmapCroppingWorkerJob;Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;Lkotlin/coroutines/Continuation;)V
+
+    iput-object p1, v0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->L$0:Ljava/lang/Object;
+
+    check-cast v0, Lkotlin/coroutines/Continuation;
+
+    return-object v0
+.end method
+
+.method public bridge synthetic invoke(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    .locals 1
+
+    check-cast p1, Lkotlinx/coroutines/CoroutineScope;
+
+    check-cast p2, Lkotlin/coroutines/Continuation;
+
+    invoke-virtual {p0, p1, p2}, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->invoke(Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+
+    move-result-object v0
+
+    return-object v0
+.end method
+
+.method public final invoke(Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+    .locals 2
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(",
+            "Lkotlinx/coroutines/CoroutineScope;",
+            "Lkotlin/coroutines/Continuation<",
+            "-",
+            "Lkotlin/Unit;",
+            ">;)",
+            "Ljava/lang/Object;"
+        }
+    .end annotation
+
+    invoke-virtual {p0, p1, p2}, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->create(Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Lkotlin/coroutines/Continuation;
+
+    move-result-object v0
+
+    check-cast v0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;
+
+    sget-object v1, Lkotlin/Unit;->INSTANCE:Lkotlin/Unit;
+
+    invoke-virtual {v0, v1}, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->invokeSuspend(Ljava/lang/Object;)Ljava/lang/Object;
+
+    move-result-object v0
+
+    return-object v0
+.end method
+
+.method public final invokeSuspend(Ljava/lang/Object;)Ljava/lang/Object;
+    .locals 6
+
+    invoke-static {}, Lkotlin/coroutines/intrinsics/IntrinsicsKt;->getCOROUTINE_SUSPENDED()Ljava/lang/Object;
+
+    .line 108
+    iget v0, p0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->label:I
+
+    packed-switch v0, :pswitch_data_0
+
+    .line 120
+    new-instance p1, Ljava/lang/IllegalStateException;
+
+    const-string v0, "call to \'resume\' before \'invoke\' with coroutine"
+
+    invoke-direct {p1, v0}, Ljava/lang/IllegalStateException;-><init>(Ljava/lang/String;)V
+
+    throw p1
+
+    .line 108
+    :pswitch_0
+    invoke-static {p1}, Lkotlin/ResultKt;->throwOnFailure(Ljava/lang/Object;)V
+
+    move-object v0, p0
+
+    .local v0, "this":Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;
+    .local p1, "$result":Ljava/lang/Object;
+    iget-object v1, v0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->L$0:Ljava/lang/Object;
+
+    check-cast v1, Lkotlinx/coroutines/CoroutineScope;
+
+    .line 109
+    .local v1, "$this$withContext":Lkotlinx/coroutines/CoroutineScope;
+    new-instance v2, Lkotlin/jvm/internal/Ref$BooleanRef;
+
+    invoke-direct {v2}, Lkotlin/jvm/internal/Ref$BooleanRef;-><init>()V
+
+    .line 110
+    .local v2, "completeCalled":Lkotlin/jvm/internal/Ref$BooleanRef;
+    invoke-static {v1}, Lkotlinx/coroutines/CoroutineScopeKt;->isActive(Lkotlinx/coroutines/CoroutineScope;)Z
+
+    move-result v3
+
+    if-eqz v3, :cond_0
+
+    .line 111
+    .end local v1    # "$this$withContext":Lkotlinx/coroutines/CoroutineScope;
+    iget-object v1, v0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->this$0:Lcom/canhub/cropper/BitmapCroppingWorkerJob;
+
+    invoke-static {v1}, Lcom/canhub/cropper/BitmapCroppingWorkerJob;->access$getCropImageViewReference$p(Lcom/canhub/cropper/BitmapCroppingWorkerJob;)Ljava/lang/ref/WeakReference;
+
+    move-result-object v1
+
+    invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+
+    move-result-object v1
+
+    check-cast v1, Lcom/canhub/cropper/CropImageView;
+
+    if-eqz v1, :cond_0
+
+    iget-object v3, v0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->$result:Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;
+
+    .local v1, "it":Lcom/canhub/cropper/CropImageView;
+    const/4 v4, 0x0
+
+    .line 112
+    .local v4, "$i$a$-let-BitmapCroppingWorkerJob$onPostExecute$2$1":I
+    const/4 v5, 0x1
+
+    iput-boolean v5, v2, Lkotlin/jvm/internal/Ref$BooleanRef;->element:Z
+
+    .line 113
+    invoke-virtual {v1, v3}, Lcom/canhub/cropper/CropImageView;->onImageCroppingAsyncComplete(Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;)V
+
+    .line 114
+    nop
+
+    .line 111
+    .end local v1    # "it":Lcom/canhub/cropper/CropImageView;
+    .end local v4    # "$i$a$-let-BitmapCroppingWorkerJob$onPostExecute$2$1":I
+    nop
+
+    .line 116
+    :cond_0
+    iget-boolean v1, v2, Lkotlin/jvm/internal/Ref$BooleanRef;->element:Z
+
+    if-nez v1, :cond_1
+
+    iget-object v1, v0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->$result:Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;
+
+    invoke-virtual {v1}, Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;->getBitmap()Landroid/graphics/Bitmap;
+
+    move-result-object v1
+
+    if-eqz v1, :cond_1
+
+    .line 118
+    .end local v2    # "completeCalled":Lkotlin/jvm/internal/Ref$BooleanRef;
+    iget-object v1, v0, Lcom/canhub/cropper/BitmapCroppingWorkerJob$onPostExecute$2;->$result:Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;
+
+    invoke-virtual {v1}, Lcom/canhub/cropper/BitmapCroppingWorkerJob$Result;->getBitmap()Landroid/graphics/Bitmap;
+
+    move-result-object v1
+
+    invoke-virtual {v1}, Landroid/graphics/Bitmap;->recycle()V
+
+    .line 120
+    :cond_1
+    sget-object v1, Lkotlin/Unit;->INSTANCE:Lkotlin/Unit;
+
+    return-object v1
+
+    :pswitch_data_0
+    .packed-switch 0x0
+        :pswitch_0
+    .end packed-switch
+.end method

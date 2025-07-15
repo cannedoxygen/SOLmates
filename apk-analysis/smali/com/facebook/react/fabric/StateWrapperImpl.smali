@@ -1,0 +1,230 @@
+.class public Lcom/facebook/react/fabric/StateWrapperImpl;
+.super Ljava/lang/Object;
+.source "StateWrapperImpl.java"
+
+# interfaces
+.implements Lcom/facebook/react/uimanager/StateWrapper;
+
+
+# static fields
+.field private static final TAG:Ljava/lang/String; = "StateWrapperImpl"
+
+
+# instance fields
+.field private volatile mDestroyed:Z
+
+.field private final mHybridData:Lcom/facebook/jni/HybridData;
+
+
+# direct methods
+.method static constructor <clinit>()V
+    .locals 0
+
+    .line 32
+    invoke-static {}, Lcom/facebook/react/fabric/FabricSoLoader;->staticInit()V
+
+    .line 33
+    return-void
+.end method
+
+.method private constructor <init>()V
+    .locals 1
+
+    .line 40
+    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    .line 38
+    const/4 v0, 0x0
+
+    iput-boolean v0, p0, Lcom/facebook/react/fabric/StateWrapperImpl;->mDestroyed:Z
+
+    .line 41
+    invoke-static {}, Lcom/facebook/react/fabric/StateWrapperImpl;->initHybrid()Lcom/facebook/jni/HybridData;
+
+    move-result-object v0
+
+    iput-object v0, p0, Lcom/facebook/react/fabric/StateWrapperImpl;->mHybridData:Lcom/facebook/jni/HybridData;
+
+    .line 42
+    return-void
+.end method
+
+.method private native getStateDataImpl()Lcom/facebook/react/bridge/ReadableNativeMap;
+.end method
+
+.method private native getStateMapBufferDataImpl()Lcom/facebook/react/common/mapbuffer/ReadableMapBuffer;
+.end method
+
+.method private static native initHybrid()Lcom/facebook/jni/HybridData;
+.end method
+
+
+# virtual methods
+.method public destroyState()V
+    .locals 1
+
+    .line 83
+    iget-boolean v0, p0, Lcom/facebook/react/fabric/StateWrapperImpl;->mDestroyed:Z
+
+    if-nez v0, :cond_0
+
+    .line 84
+    const/4 v0, 0x1
+
+    iput-boolean v0, p0, Lcom/facebook/react/fabric/StateWrapperImpl;->mDestroyed:Z
+
+    .line 85
+    iget-object v0, p0, Lcom/facebook/react/fabric/StateWrapperImpl;->mHybridData:Lcom/facebook/jni/HybridData;
+
+    invoke-virtual {v0}, Lcom/facebook/jni/HybridData;->resetNative()V
+
+    .line 87
+    :cond_0
+    return-void
+.end method
+
+.method public getStateData()Lcom/facebook/react/bridge/ReadableNativeMap;
+    .locals 2
+
+    .line 65
+    iget-boolean v0, p0, Lcom/facebook/react/fabric/StateWrapperImpl;->mDestroyed:Z
+
+    if-eqz v0, :cond_0
+
+    .line 66
+    const-string v0, "StateWrapperImpl"
+
+    const-string v1, "Race between StateWrapperImpl destruction and getState"
+
+    invoke-static {v0, v1}, Lcom/facebook/common/logging/FLog;->e(Ljava/lang/String;Ljava/lang/String;)V
+
+    .line 67
+    const/4 v0, 0x0
+
+    return-object v0
+
+    .line 69
+    :cond_0
+    invoke-direct {p0}, Lcom/facebook/react/fabric/StateWrapperImpl;->getStateDataImpl()Lcom/facebook/react/bridge/ReadableNativeMap;
+
+    move-result-object v0
+
+    return-object v0
+.end method
+
+.method public getStateDataMapBuffer()Lcom/facebook/react/common/mapbuffer/ReadableMapBuffer;
+    .locals 2
+
+    .line 55
+    iget-boolean v0, p0, Lcom/facebook/react/fabric/StateWrapperImpl;->mDestroyed:Z
+
+    if-eqz v0, :cond_0
+
+    .line 56
+    const-string v0, "StateWrapperImpl"
+
+    const-string v1, "Race between StateWrapperImpl destruction and getState"
+
+    invoke-static {v0, v1}, Lcom/facebook/common/logging/FLog;->e(Ljava/lang/String;Ljava/lang/String;)V
+
+    .line 57
+    const/4 v0, 0x0
+
+    return-object v0
+
+    .line 59
+    :cond_0
+    invoke-direct {p0}, Lcom/facebook/react/fabric/StateWrapperImpl;->getStateMapBufferDataImpl()Lcom/facebook/react/common/mapbuffer/ReadableMapBuffer;
+
+    move-result-object v0
+
+    return-object v0
+.end method
+
+.method public toString()Ljava/lang/String;
+    .locals 3
+
+    .line 91
+    iget-boolean v0, p0, Lcom/facebook/react/fabric/StateWrapperImpl;->mDestroyed:Z
+
+    if-eqz v0, :cond_0
+
+    .line 92
+    const-string v0, "<destroyed>"
+
+    return-object v0
+
+    .line 95
+    :cond_0
+    invoke-direct {p0}, Lcom/facebook/react/fabric/StateWrapperImpl;->getStateMapBufferDataImpl()Lcom/facebook/react/common/mapbuffer/ReadableMapBuffer;
+
+    move-result-object v0
+
+    .line 96
+    .local v0, "mapBuffer":Lcom/facebook/react/common/mapbuffer/ReadableMapBuffer;
+    if-eqz v0, :cond_1
+
+    .line 97
+    invoke-virtual {v0}, Lcom/facebook/react/common/mapbuffer/ReadableMapBuffer;->toString()Ljava/lang/String;
+
+    move-result-object v1
+
+    return-object v1
+
+    .line 100
+    :cond_1
+    invoke-direct {p0}, Lcom/facebook/react/fabric/StateWrapperImpl;->getStateDataImpl()Lcom/facebook/react/bridge/ReadableNativeMap;
+
+    move-result-object v1
+
+    .line 101
+    .local v1, "map":Lcom/facebook/react/bridge/ReadableNativeMap;
+    if-nez v1, :cond_2
+
+    .line 102
+    const-string v2, "<unexpected null>"
+
+    return-object v2
+
+    .line 105
+    :cond_2
+    invoke-virtual {v1}, Lcom/facebook/react/bridge/ReadableNativeMap;->toString()Ljava/lang/String;
+
+    move-result-object v2
+
+    return-object v2
+.end method
+
+.method public updateState(Lcom/facebook/react/bridge/WritableMap;)V
+    .locals 2
+    .param p1, "map"    # Lcom/facebook/react/bridge/WritableMap;
+
+    .line 74
+    iget-boolean v0, p0, Lcom/facebook/react/fabric/StateWrapperImpl;->mDestroyed:Z
+
+    if-eqz v0, :cond_0
+
+    .line 75
+    const-string v0, "StateWrapperImpl"
+
+    const-string v1, "Race between StateWrapperImpl destruction and updateState"
+
+    invoke-static {v0, v1}, Lcom/facebook/common/logging/FLog;->e(Ljava/lang/String;Ljava/lang/String;)V
+
+    .line 76
+    return-void
+
+    .line 78
+    :cond_0
+    move-object v0, p1
+
+    check-cast v0, Lcom/facebook/react/bridge/NativeMap;
+
+    invoke-virtual {p0, v0}, Lcom/facebook/react/fabric/StateWrapperImpl;->updateStateImpl(Lcom/facebook/react/bridge/NativeMap;)V
+
+    .line 79
+    return-void
+.end method
+
+.method public native updateStateImpl(Lcom/facebook/react/bridge/NativeMap;)V
+.end method

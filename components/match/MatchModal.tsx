@@ -1,0 +1,436 @@
+import React, { useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  Image,
+  Pressable,
+  Dimensions,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  withSequence,
+  withDelay,
+  interpolate,
+  runOnJS,
+} from 'react-native-reanimated';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+interface UserProfile {
+  id: string;
+  username: string;
+  avatar_url?: string;
+}
+
+interface MatchModalProps {
+  visible: boolean;
+  onClose: () => void;
+  currentUser: UserProfile;
+  matchedUser: UserProfile;
+  onSendMessage: () => void;
+  onKeepSwiping: () => void;
+}
+
+export function MatchModal({
+  visible,
+  onClose,
+  currentUser,
+  matchedUser,
+  onSendMessage,
+  onKeepSwiping
+}: MatchModalProps) {
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+  const heartsOpacity = useSharedValue(0);
+  const currentUserScale = useSharedValue(0);
+  const matchedUserScale = useSharedValue(0);
+  const sparklesOpacity = useSharedValue(0);
+  const titleScale = useSharedValue(0);
+  const buttonsTranslateY = useSharedValue(50);
+
+  useEffect(() => {
+    if (visible) {
+      // Start the entrance animation sequence
+      opacity.value = withTiming(1, { duration: 300 });
+      scale.value = withSpring(1, { damping: 20, stiffness: 200 });
+      
+      // Animate hearts background
+      heartsOpacity.value = withDelay(200, withTiming(1, { duration: 800 }));
+      
+      // Animate user avatars with stagger
+      currentUserScale.value = withDelay(300, withSpring(1, { damping: 15, stiffness: 150 }));
+      matchedUserScale.value = withDelay(500, withSpring(1, { damping: 15, stiffness: 150 }));
+      
+      // Animate sparkles
+      sparklesOpacity.value = withDelay(600, withSequence(
+        withTiming(1, { duration: 300 }),
+        withTiming(0.7, { duration: 500 }),
+        withTiming(1, { duration: 500 })
+      ));
+      
+      // Animate title
+      titleScale.value = withDelay(700, withSpring(1, { damping: 10, stiffness: 100 }));
+      
+      // Animate buttons
+      buttonsTranslateY.value = withDelay(800, withSpring(0, { damping: 15, stiffness: 120 }));
+    } else {
+      // Reset all animations
+      scale.value = 0;
+      opacity.value = 0;
+      heartsOpacity.value = 0;
+      currentUserScale.value = 0;
+      matchedUserScale.value = 0;
+      sparklesOpacity.value = 0;
+      titleScale.value = 0;
+      buttonsTranslateY.value = 50;
+    }
+  }, [visible]);
+
+  const modalAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  const heartsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: heartsOpacity.value,
+  }));
+
+  const currentUserAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: currentUserScale.value }],
+  }));
+
+  const matchedUserAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: matchedUserScale.value }],
+  }));
+
+  const sparklesAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: sparklesOpacity.value,
+  }));
+
+  const titleAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: titleScale.value }],
+  }));
+
+  const buttonsAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: buttonsTranslateY.value }],
+    opacity: interpolate(buttonsTranslateY.value, [50, 0], [0, 1]),
+  }));
+
+  const handleKeepSwiping = () => {
+    runOnJS(onKeepSwiping)();
+    runOnJS(onClose)();
+  };
+
+  const handleSendMessage = () => {
+    runOnJS(onSendMessage)();
+    runOnJS(onClose)();
+  };
+
+  const renderAvatar = (user: UserProfile, isCurrentUser: boolean) => {
+    const animatedStyle = isCurrentUser ? currentUserAnimatedStyle : matchedUserAnimatedStyle;
+    
+    return (
+      <Animated.View style={[styles.avatarContainer, animatedStyle]}>
+        <View
+          style={[styles.avatarBorder, { backgroundColor: '#9945FF' }]}
+        >
+          {user.avatar_url ? (
+            <Image
+              source={{ uri: user.avatar_url }}
+              style={styles.avatar}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              style={[styles.avatar, { backgroundColor: '#9945FF' }]}
+            >
+              <Text style={styles.avatarText}>
+                {user.username?.charAt(0)?.toUpperCase() || '?'}
+              </Text>
+            </View>
+          )}
+        </View>
+        
+        {/* Username */}
+        <Text style={styles.username}>{user.username}</Text>
+      </Animated.View>
+    );
+  };
+
+  const renderSparkles = () => {
+    const sparklePositions = [
+      { top: '15%', left: '10%', size: 20, delay: 0 },
+      { top: '25%', right: '15%', size: 16, delay: 200 },
+      { top: '45%', left: '8%', size: 24, delay: 400 },
+      { top: '60%', right: '12%', size: 18, delay: 600 },
+      { top: '70%', left: '15%', size: 14, delay: 800 },
+      { top: '20%', right: '35%', size: 22, delay: 300 },
+      { top: '50%', left: '35%', size: 16, delay: 500 },
+      { top: '35%', right: '8%', size: 20, delay: 700 },
+    ];
+
+    return sparklePositions.map((sparkle, index) => (
+      <Animated.View
+        key={index}
+        style={[
+          styles.sparkle,
+          {
+            top: sparkle.top as any,
+            left: sparkle.left as any,
+            right: sparkle.right as any,
+          },
+          sparklesAnimatedStyle,
+        ]}
+      >
+        <Ionicons name="star" size={sparkle.size} color="#FFD700" />
+      </Animated.View>
+    ));
+  };
+
+  const renderHearts = () => {
+    const heartPositions = [
+      { top: '10%', left: '20%', size: 24, delay: 0 },
+      { top: '30%', right: '25%', size: 20, delay: 300 },
+      { top: '50%', left: '25%', size: 28, delay: 600 },
+      { top: '65%', right: '20%', size: 22, delay: 900 },
+      { top: '80%', left: '30%', size: 18, delay: 1200 },
+    ];
+
+    return heartPositions.map((heart, index) => (
+      <Animated.View
+        key={index}
+        style={[
+          styles.heart,
+          {
+            top: heart.top as any,
+            left: heart.left as any,
+            right: heart.right as any,
+          },
+          heartsAnimatedStyle,
+        ]}
+      >
+        <Ionicons name="heart" size={heart.size} color="#FF6B9D" />
+      </Animated.View>
+    ));
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      <View style={styles.overlay}>
+        <View
+          style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.8)' }]}
+        />
+        
+        {/* Animated background elements */}
+        {renderHearts()}
+        {renderSparkles()}
+
+        <Animated.View style={[styles.modalContainer, modalAnimatedStyle]}>
+          {/* Match Title */}
+          <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
+            <View
+              style={[styles.titleBackground, { backgroundColor: '#FF6B9D' }]}
+            >
+              <Text style={styles.matchTitle}>It's a Match!</Text>
+            </View>
+            <Ionicons name="heart" size={32} color="#FF6B9D" style={styles.heartIcon} />
+          </Animated.View>
+
+          {/* User Avatars */}
+          <View style={styles.avatarsContainer}>
+            {renderAvatar(currentUser, true)}
+            
+            {/* Heart in center */}
+            <Animated.View style={[styles.centerHeart, sparklesAnimatedStyle]}>
+              <View
+                style={[styles.centerHeartBg, { backgroundColor: '#FF6B9D' }]}
+              >
+                <Ionicons name="heart" size={40} color="#FFFFFF" />
+              </View>
+            </Animated.View>
+            
+            {renderAvatar(matchedUser, false)}
+          </View>
+
+          {/* Match Message */}
+          <Text style={styles.matchMessage}>
+            You and {matchedUser.username} liked each other!
+          </Text>
+
+          {/* Action Buttons */}
+          <Animated.View style={[styles.buttonsContainer, buttonsAnimatedStyle]}>
+            <Pressable style={styles.secondaryButton} onPress={handleKeepSwiping}>
+              <Text style={styles.secondaryButtonText}>Keep Swiping</Text>
+            </Pressable>
+            
+            <Pressable style={styles.primaryButton} onPress={handleSendMessage}>
+              <View
+                style={[styles.primaryButtonGradient, { backgroundColor: '#9945FF' }]}
+              >
+                <Ionicons name="chatbubble" size={20} color="#FFFFFF" />
+                <Text style={styles.primaryButtonText}>Send Message</Text>
+              </View>
+            </Pressable>
+          </Animated.View>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: screenWidth * 0.9,
+    backgroundColor: 'rgba(25, 30, 50, 0.95)',
+    borderRadius: 32,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+    position: 'relative',
+  },
+  titleBackground: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    marginBottom: 8,
+  },
+  matchTitle: {
+    fontSize: 28,
+    fontFamily: 'Inter-Bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  heartIcon: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+  },
+  avatarsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 32,
+    position: 'relative',
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarBorder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 32,
+    fontFamily: 'Inter-Bold',
+    color: '#FFFFFF',
+  },
+  username: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  centerHeart: {
+    position: 'absolute',
+    left: '50%',
+    top: '20%',
+    marginLeft: -30,
+    zIndex: 10,
+  },
+  centerHeartBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#FF6B9D',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  matchMessage: {
+    fontSize: 18,
+    fontFamily: 'Inter-Medium',
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginBottom: 40,
+    lineHeight: 24,
+  },
+  buttonsContainer: {
+    width: '100%',
+    gap: 16,
+  },
+  primaryButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  primaryButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  primaryButtonText: {
+    fontSize: 18,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
+  },
+  secondaryButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  sparkle: {
+    position: 'absolute',
+  },
+  heart: {
+    position: 'absolute',
+  },
+});

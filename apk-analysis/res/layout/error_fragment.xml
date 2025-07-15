@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:orientation="vertical" android:id="@id/error_main_content" android:paddingLeft="18.0dip" android:paddingRight="18.0dip" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_marginTop="32.0dip" android:weightSum="1.0" android:layout_above="@id/error_footer">
+        <TextView android:textSize="22.0sp" android:textStyle="bold" android:textColor="@color/dev_launcher_primary" android:tag="DevLauncherErrorScreen" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/dev_launcher_error_header" />
+        <TextView android:textSize="14.0sp" android:textColor="@color/dev_launcher_primary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12.0dip" android:text="@string/dev_launcher_error_details" />
+        <TextView android:textSize="16.0sp" android:textStyle="bold" android:textColor="@color/dev_launcher_primary" android:id="@id/errorDetails" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22.0dip" />
+        <ListView android:id="@id/error_stack" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10.0dip" android:divider="@null" android:dividerHeight="0.0dip" />
+    </LinearLayout>
+    <LinearLayout android:id="@id/error_footer" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_alignParentBottom="true">
+        <LinearLayout android:orientation="vertical" android:background="@color/dev_launcher_white" android:paddingLeft="16.0dip" android:paddingTop="16.0dip" android:paddingRight="16.0dip" android:paddingBottom="16.0dip" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingHorizontal="16.0dip" android:paddingVertical="16.0dip">
+            <Button android:textSize="14.0sp" android:textStyle="bold" android:textColor="@color/dev_launcher_white" android:id="@id/reloadButton" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/dev_launcher_reload" android:textAllCaps="false" android:backgroundTint="@color/dev_launcher_primary" />
+            <Button android:textSize="14.0sp" android:textStyle="bold" android:textColor="@color/dev_launcher_primary" android:id="@id/homeButton" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/dev_launcher_go_to_home" android:textAllCaps="false" android:backgroundTint="@color/dev_launcher_secondaryBackgroundColor" />
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

@@ -1,0 +1,539 @@
+.class public Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;
+.super Lcom/facebook/react/uimanager/BaseViewManagerDelegate;
+.source "RNSVGFeCompositeManagerDelegate.java"
+
+
+# annotations
+.annotation system Ldalvik/annotation/Signature;
+    value = {
+        "<T:",
+        "Landroid/view/View;",
+        "U:",
+        "Lcom/facebook/react/uimanager/BaseViewManager<",
+        "TT;+",
+        "Lcom/facebook/react/uimanager/LayoutShadowNode;",
+        ">;:",
+        "Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface<",
+        "TT;>;>",
+        "Lcom/facebook/react/uimanager/BaseViewManagerDelegate<",
+        "TT;TU;>;"
+    }
+.end annotation
+
+
+# direct methods
+.method public constructor <init>(Lcom/facebook/react/uimanager/BaseViewManager;)V
+    .locals 0
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(TU;)V"
+        }
+    .end annotation
+
+    .line 21
+    .local p0, "this":Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;, "Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate<TT;TU;>;"
+    .local p1, "viewManager":Lcom/facebook/react/uimanager/BaseViewManager;, "TU;"
+    invoke-direct {p0, p1}, Lcom/facebook/react/uimanager/BaseViewManagerDelegate;-><init>(Lcom/facebook/react/uimanager/BaseViewManagerInterface;)V
+
+    .line 22
+    return-void
+.end method
+
+
+# virtual methods
+.method public setProperty(Landroid/view/View;Ljava/lang/String;Ljava/lang/Object;)V
+    .locals 3
+    .param p2, "propName"    # Ljava/lang/String;
+    .param p3, "value"    # Ljava/lang/Object;
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(TT;",
+            "Ljava/lang/String;",
+            "Ljava/lang/Object;",
+            ")V"
+        }
+    .end annotation
+
+    .line 25
+    .local p0, "this":Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;, "Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate<TT;TU;>;"
+    .local p1, "view":Landroid/view/View;, "TT;"
+    invoke-virtual {p2}, Ljava/lang/String;->hashCode()I
+
+    move-result v0
+
+    sparse-switch v0, :sswitch_data_0
+
+    :cond_0
+    goto/16 :goto_0
+
+    :sswitch_0
+    const-string v0, "operator1"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x7
+
+    goto/16 :goto_1
+
+    :sswitch_1
+    const-string v0, "width"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x2
+
+    goto/16 :goto_1
+
+    :sswitch_2
+    const-string v0, "in2"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x6
+
+    goto :goto_1
+
+    :sswitch_3
+    const-string v0, "in1"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x5
+
+    goto :goto_1
+
+    :sswitch_4
+    const-string v0, "k4"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/16 v0, 0xb
+
+    goto :goto_1
+
+    :sswitch_5
+    const-string v0, "k3"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/16 v0, 0xa
+
+    goto :goto_1
+
+    :sswitch_6
+    const-string v0, "k2"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/16 v0, 0x9
+
+    goto :goto_1
+
+    :sswitch_7
+    const-string v0, "k1"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/16 v0, 0x8
+
+    goto :goto_1
+
+    :sswitch_8
+    const-string v0, "y"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x1
+
+    goto :goto_1
+
+    :sswitch_9
+    const-string v0, "x"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x0
+
+    goto :goto_1
+
+    :sswitch_a
+    const-string v0, "result"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x4
+
+    goto :goto_1
+
+    :sswitch_b
+    const-string v0, "height"
+
+    invoke-virtual {p2, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x3
+
+    goto :goto_1
+
+    :goto_0
+    const/4 v0, -0x1
+
+    :goto_1
+    const/4 v1, 0x0
+
+    const/4 v2, 0x0
+
+    packed-switch v0, :pswitch_data_0
+
+    .line 63
+    invoke-super {p0, p1, p2, p3}, Lcom/facebook/react/uimanager/BaseViewManagerDelegate;->setProperty(Landroid/view/View;Ljava/lang/String;Ljava/lang/Object;)V
+
+    goto/16 :goto_9
+
+    .line 60
+    :pswitch_0
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    if-nez p3, :cond_1
+
+    goto :goto_2
+
+    :cond_1
+    move-object v1, p3
+
+    check-cast v1, Ljava/lang/Double;
+
+    invoke-virtual {v1}, Ljava/lang/Double;->floatValue()F
+
+    move-result v2
+
+    :goto_2
+    invoke-interface {v0, p1, v2}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setK4(Landroid/view/View;F)V
+
+    .line 61
+    goto/16 :goto_9
+
+    .line 57
+    :pswitch_1
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    if-nez p3, :cond_2
+
+    goto :goto_3
+
+    :cond_2
+    move-object v1, p3
+
+    check-cast v1, Ljava/lang/Double;
+
+    invoke-virtual {v1}, Ljava/lang/Double;->floatValue()F
+
+    move-result v2
+
+    :goto_3
+    invoke-interface {v0, p1, v2}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setK3(Landroid/view/View;F)V
+
+    .line 58
+    goto/16 :goto_9
+
+    .line 54
+    :pswitch_2
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    if-nez p3, :cond_3
+
+    goto :goto_4
+
+    :cond_3
+    move-object v1, p3
+
+    check-cast v1, Ljava/lang/Double;
+
+    invoke-virtual {v1}, Ljava/lang/Double;->floatValue()F
+
+    move-result v2
+
+    :goto_4
+    invoke-interface {v0, p1, v2}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setK2(Landroid/view/View;F)V
+
+    .line 55
+    goto/16 :goto_9
+
+    .line 51
+    :pswitch_3
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    if-nez p3, :cond_4
+
+    goto :goto_5
+
+    :cond_4
+    move-object v1, p3
+
+    check-cast v1, Ljava/lang/Double;
+
+    invoke-virtual {v1}, Ljava/lang/Double;->floatValue()F
+
+    move-result v2
+
+    :goto_5
+    invoke-interface {v0, p1, v2}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setK1(Landroid/view/View;F)V
+
+    .line 52
+    goto/16 :goto_9
+
+    .line 48
+    :pswitch_4
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    move-object v1, p3
+
+    check-cast v1, Ljava/lang/String;
+
+    invoke-interface {v0, p1, v1}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setOperator1(Landroid/view/View;Ljava/lang/String;)V
+
+    .line 49
+    goto/16 :goto_9
+
+    .line 45
+    :pswitch_5
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    if-nez p3, :cond_5
+
+    goto :goto_6
+
+    :cond_5
+    move-object v1, p3
+
+    check-cast v1, Ljava/lang/String;
+
+    :goto_6
+    invoke-interface {v0, p1, v1}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setIn2(Landroid/view/View;Ljava/lang/String;)V
+
+    .line 46
+    goto :goto_9
+
+    .line 42
+    :pswitch_6
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    if-nez p3, :cond_6
+
+    goto :goto_7
+
+    :cond_6
+    move-object v1, p3
+
+    check-cast v1, Ljava/lang/String;
+
+    :goto_7
+    invoke-interface {v0, p1, v1}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setIn1(Landroid/view/View;Ljava/lang/String;)V
+
+    .line 43
+    goto :goto_9
+
+    .line 39
+    :pswitch_7
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    if-nez p3, :cond_7
+
+    goto :goto_8
+
+    :cond_7
+    move-object v1, p3
+
+    check-cast v1, Ljava/lang/String;
+
+    :goto_8
+    invoke-interface {v0, p1, v1}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setResult(Landroid/view/View;Ljava/lang/String;)V
+
+    .line 40
+    goto :goto_9
+
+    .line 36
+    :pswitch_8
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    new-instance v1, Lcom/facebook/react/bridge/DynamicFromObject;
+
+    invoke-direct {v1, p3}, Lcom/facebook/react/bridge/DynamicFromObject;-><init>(Ljava/lang/Object;)V
+
+    invoke-interface {v0, p1, v1}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setHeight(Landroid/view/View;Lcom/facebook/react/bridge/Dynamic;)V
+
+    .line 37
+    goto :goto_9
+
+    .line 33
+    :pswitch_9
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    new-instance v1, Lcom/facebook/react/bridge/DynamicFromObject;
+
+    invoke-direct {v1, p3}, Lcom/facebook/react/bridge/DynamicFromObject;-><init>(Ljava/lang/Object;)V
+
+    invoke-interface {v0, p1, v1}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setWidth(Landroid/view/View;Lcom/facebook/react/bridge/Dynamic;)V
+
+    .line 34
+    goto :goto_9
+
+    .line 30
+    :pswitch_a
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    new-instance v1, Lcom/facebook/react/bridge/DynamicFromObject;
+
+    invoke-direct {v1, p3}, Lcom/facebook/react/bridge/DynamicFromObject;-><init>(Ljava/lang/Object;)V
+
+    invoke-interface {v0, p1, v1}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setY(Landroid/view/View;Lcom/facebook/react/bridge/Dynamic;)V
+
+    .line 31
+    goto :goto_9
+
+    .line 27
+    :pswitch_b
+    iget-object v0, p0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerDelegate;->mViewManager:Lcom/facebook/react/uimanager/BaseViewManagerInterface;
+
+    check-cast v0, Lcom/facebook/react/uimanager/BaseViewManager;
+
+    check-cast v0, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;
+
+    new-instance v1, Lcom/facebook/react/bridge/DynamicFromObject;
+
+    invoke-direct {v1, p3}, Lcom/facebook/react/bridge/DynamicFromObject;-><init>(Ljava/lang/Object;)V
+
+    invoke-interface {v0, p1, v1}, Lcom/facebook/react/viewmanagers/RNSVGFeCompositeManagerInterface;->setX(Landroid/view/View;Lcom/facebook/react/bridge/Dynamic;)V
+
+    .line 28
+    nop
+
+    .line 65
+    :goto_9
+    return-void
+
+    nop
+
+    :sswitch_data_0
+    .sparse-switch
+        -0x48c76ed9 -> :sswitch_b
+        -0x37b237e3 -> :sswitch_a
+        0x78 -> :sswitch_9
+        0x79 -> :sswitch_8
+        0xd26 -> :sswitch_7
+        0xd27 -> :sswitch_6
+        0xd28 -> :sswitch_5
+        0xd29 -> :sswitch_4
+        0x197ac -> :sswitch_3
+        0x197ad -> :sswitch_2
+        0x6be2dc6 -> :sswitch_1
+        0x631aec0d -> :sswitch_0
+    .end sparse-switch
+
+    :pswitch_data_0
+    .packed-switch 0x0
+        :pswitch_b
+        :pswitch_a
+        :pswitch_9
+        :pswitch_8
+        :pswitch_7
+        :pswitch_6
+        :pswitch_5
+        :pswitch_4
+        :pswitch_3
+        :pswitch_2
+        :pswitch_1
+        :pswitch_0
+    .end packed-switch
+.end method
