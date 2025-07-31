@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ChatService, Chat } from '../lib/services/chatService';
 import { ProfileService } from '../lib/services/profileService';
+import { getBestAvatarUrl } from '../lib/utils/imageUtils';
 
 export default function ChatsScreen() {
   const insets = useSafeAreaInsets();
@@ -28,7 +29,7 @@ export default function ChatsScreen() {
     if (user) {
       loadChats();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const loadChats = async () => {
     if (!user) return;
@@ -90,9 +91,9 @@ export default function ChatsScreen() {
         onPress={() => router.push(`/chat/${item.other_user.id}`)}
       >
         <View style={styles.avatarContainer}>
-          {item.other_user.twitter_avatar_url || item.other_user.avatar_url ? (
+          {getBestAvatarUrl(item.other_user.twitter_avatar_url, item.other_user.avatar_url) ? (
             <Image
-              source={{ uri: ProfileService.getHighResTwitterImage(item.other_user.twitter_avatar_url || item.other_user.avatar_url) }}
+              source={{ uri: getBestAvatarUrl(item.other_user.twitter_avatar_url, item.other_user.avatar_url) }}
               style={styles.avatar}
             />
           ) : (

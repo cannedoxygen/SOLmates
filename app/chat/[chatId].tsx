@@ -24,6 +24,7 @@ import { TipModal } from '../../components/TipModal';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
+import { getBestAvatarUrl } from '../../lib/utils/imageUtils';
 
 export default function ChatRoom() {
   const insets = useSafeAreaInsets();
@@ -47,7 +48,7 @@ export default function ChatRoom() {
       loadChatData();
       subscribeToMessages();
     }
-  }, [chatId, user]);
+  }, [chatId, user?.id]);
 
   const loadChatData = async () => {
     if (!chatId || !user) return;
@@ -332,9 +333,9 @@ export default function ChatRoom() {
           </Pressable>
           
           <View style={styles.headerInfo}>
-            {otherParticipant?.twitter_avatar_url || otherParticipant?.avatar_url ? (
+            {getBestAvatarUrl(otherParticipant?.twitter_avatar_url, otherParticipant?.avatar_url) ? (
               <Image
-                source={{ uri: otherParticipant.twitter_avatar_url || otherParticipant.avatar_url }}
+                source={{ uri: getBestAvatarUrl(otherParticipant?.twitter_avatar_url, otherParticipant?.avatar_url) }}
                 style={styles.headerAvatar}
               />
             ) : (

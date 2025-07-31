@@ -14,6 +14,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
+import { getBestAvatarUrl } from '../../../lib/utils/imageUtils';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -52,7 +53,7 @@ export function SimpleMainProfileCard({ userProfile }: SimpleMainProfileCardProp
     };
   });
 
-  const avatarUrl = userProfile.twitter_avatar_url || userProfile.avatar_url;
+  const avatarUrl = getBestAvatarUrl(userProfile.twitter_avatar_url, userProfile.avatar_url);
 
   const getReputationColor = (score: number = 0) => {
     if (score >= 90) return ['#00FF88', '#00CC6A'];

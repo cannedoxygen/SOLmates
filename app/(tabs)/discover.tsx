@@ -12,7 +12,9 @@ import { supabase } from '../../lib/supabase/client';
 import { AnalyticsService } from '../../lib/services/analyticsService';
 import { PremiumService } from '../../lib/services/premiumService';
 import { notificationService } from '../../lib/services/notifications';
+import { glassEffects } from '../../lib/styles/glassEffects';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { getBestAvatarUrl } from '../../lib/utils/imageUtils';
 
 export default function Discover() {
   const insets = useSafeAreaInsets();
@@ -36,7 +38,7 @@ export default function Discover() {
     if (user) {
       initializeMatching();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const initializeMatching = async (isRefreshing = false) => {
     if (!user) return;
@@ -66,7 +68,7 @@ export default function Discover() {
         id: userProfile.id,
         username: userProfile.username || 'User',
         bio: userProfile.bio || '',
-        avatar_url: userProfile.twitter_avatar_url || userProfile.avatar_url,
+        avatar_url: getBestAvatarUrl(userProfile.twitter_avatar_url, userProfile.avatar_url),
         skills: userProfile.skills || [],
         looking_for: userProfile.looking_for || [],
         wallet_address: userProfile.wallet_address || '',
@@ -108,7 +110,7 @@ export default function Discover() {
         id: user.id,
         username: user.username || user.display_name || 'Unknown',
         bio: user.bio || 'No bio available',
-        avatar_url: user.twitter_avatar_url || user.avatar_url,
+        avatar_url: getBestAvatarUrl(user.twitter_avatar_url, user.avatar_url),
         skills: user.skills || [],
         looking_for: user.looking_for || [],
         wallet_address: user.wallet_address || '',
@@ -451,6 +453,10 @@ export default function Discover() {
     setShowProfileViewer(true);
   };
 
+  const handleProgrammaticSwipe = useCallback((swipeLeft: () => void, swipeRight: () => void, superLike: () => void) => {
+    setSwipeFunctions({ swipeLeft, swipeRight, superLike });
+  }, []);
+
   if (loading) {
     return (
       <LinearGradient colors={['#0A0E27', '#1A1F3A']} style={styles.container}>
@@ -482,7 +488,7 @@ export default function Discover() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, glassEffects.subtleGlass, { padding: 20, marginHorizontal: 24, marginBottom: 20 }]}>
           <Text style={styles.title}>Discover</Text>
           <Text style={styles.subtitle}>Swipe right to connect</Text>
         </View>
@@ -492,7 +498,7 @@ export default function Discover() {
             <Animated.View 
               entering={FadeIn}
               exiting={FadeOut}
-              style={styles.noCardsContainer}
+              style={[styles.noCardsContainer, glassEffects.secondaryGlass, { margin: 24, padding: 40 }]}
             >
               <Text style={styles.noCardsTitle}>No More Profiles</Text>
               <Text style={styles.noCardsText}>
@@ -508,9 +514,7 @@ export default function Discover() {
                 onSuperLike={handleSuperLike}
                 onNoMoreCards={handleNoMoreCards}
                 onCardTap={handleCardTap}
-                onProgrammaticSwipe={(swipeLeft, swipeRight, superLike) => {
-                  setSwipeFunctions({ swipeLeft, swipeRight, superLike });
-                }}
+                onProgrammaticSwipe={handleProgrammaticSwipe}
               />
               <SwipeActions
                 onReject={() => {
@@ -581,6 +585,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 24,
     marginBottom: 20,
+    textAlign: 'center',
   },
   title: {
     fontSize: 32,
@@ -600,6 +605,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    ...glassEffects.secondaryGlass,
+    margin: 24,
+    padding: 40,
   },
   loadingText: {
     fontSize: 16,
@@ -612,6 +620,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 48,
+    textAlign: 'center',
   },
   noCardsTitle: {
     fontSize: 24,

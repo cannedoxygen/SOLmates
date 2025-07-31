@@ -1,6 +1,7 @@
 import { supabase } from '../supabase/client';
 import { UserSafetyService } from './userSafetyService';
 import { UserMetricsService } from './userMetricsService';
+import { getHighResTwitterImage, getBestAvatarUrl } from '../utils/imageUtils';
 
 export interface SupabaseUserProfile {
   id: string;
@@ -61,11 +62,17 @@ export class ProfileService {
         (account: any) => account.type === 'twitter_oauth'
       );
 
+      // Allow profile creation without wallet - Privy will create wallet asynchronously
+      if (!walletAddress) {
+        console.log('⚠️ No wallet address provided during profile sync - Privy may still be creating embedded wallet');
+        console.log('🔍 Privy user linked accounts:', privyUser.linked_accounts);
+      }
+
       // Create a basic profile using Twitter data - user will complete it in onboarding
       const profileData = {
         privy_user_id: privyUser.id,
-        wallet_address: walletAddress,
-        username: twitterAccount?.name || twitterAccount?.username || 'Anonymous User',
+        wallet_address: walletAddress || null, // Allow null wallet - will be updated when Privy creates it
+        username: twitterAccount?.username || 'Anonymous User', // Use Twitter username (handle)
         bio: '', // Leave empty for user to fill
         skills: [], // Leave empty for user to select
         looking_for: [], // Leave empty for user to select
@@ -330,9 +337,8 @@ export class ProfileService {
    */
   static convertToUserProfile(supabaseUser: SupabaseUserProfile): any {
     const username = supabaseUser.username || supabaseUser.twitter_username || 'Unknown User';
-    const twitter_avatar = ProfileService.getHighResTwitterImage(supabaseUser.twitter_avatar_url);
     const generated_avatar = ProfileService.generateAvatarUrl(username);
-    const final_avatar = twitter_avatar || supabaseUser.avatar_url || generated_avatar;
+    const final_avatar = getBestAvatarUrl(supabaseUser.twitter_avatar_url, supabaseUser.avatar_url, generated_avatar);
     
     return {
       id: supabaseUser.id,
@@ -358,17 +364,10 @@ export class ProfileService {
 
   /**
    * Get high-resolution Twitter profile image with fallbacks
+   * @deprecated Use getHighResTwitterImage from imageUtils instead
    */
   static getHighResTwitterImage(url?: string): string | undefined {
-    if (!url || typeof url !== 'string') {
-      return undefined;
-    }
-    
-    // Return the Twitter profile image directly from Privy
-    // Replace size modifiers to get higher resolution
-    return url.replace(/_normal\.(jpg|jpeg|png)$/i, '_400x400.$1')
-              .replace(/_bigger\.(jpg|jpeg|png)$/i, '_400x400.$1')
-              .replace(/_mini\.(jpg|jpeg|png)$/i, '_400x400.$1');
+    return getHighResTwitterImage(url, '400x400');
   }
 
   /**
@@ -402,6 +401,36 @@ export class ProfileService {
       return user || null;
     } catch (error) {
       console.error('❌ Failed to get user profile by ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update user wallet address after Privy creates embedded wallet
+   */
+  static async updateUserWallet(privyUserId: string, walletAddress: string): Promise<SupabaseUserProfile | null> {
+    try {
+      console.log('🔄 Updating user wallet address:', { privyUserId, walletAddress });
+      
+      const { data: updatedUser, error } = await supabase
+        .from('users')
+        .update({ 
+          wallet_address: walletAddress,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('privy_user_id', privyUserId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Failed to update wallet address:', error);
+        throw error;
+      }
+
+      console.log('✅ Wallet address updated successfully');
+      return updatedUser;
+    } catch (error) {
+      console.error('❌ Failed to update user wallet:', error);
       return null;
     }
   }

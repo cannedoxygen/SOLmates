@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { getHighResTwitterImage } from '../../lib/utils/imageUtils';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 48;
@@ -26,11 +27,14 @@ interface ProfileDisplayCardProps {
 }
 
 export function ProfileDisplayCard({ user }: ProfileDisplayCardProps) {
+  // Get high-resolution image URL
+  const highResAvatarUrl = getHighResTwitterImage(user.avatar_url) || user.avatar_url;
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        {user.avatar_url ? (
-          <Image source={{ uri: user.avatar_url }} style={styles.image} />
+        {highResAvatarUrl ? (
+          <Image source={{ uri: highResAvatarUrl }} style={styles.image} />
         ) : (
           <LinearGradient
             colors={['#9945FF', '#7B3FF2']}

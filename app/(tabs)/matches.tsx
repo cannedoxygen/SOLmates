@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ProfileCardViewer } from '../../components/profile/ProfileCardViewer';
 import { UserProfile } from '../../lib/matching/matchEngine';
+import { getBestAvatarUrl } from '../../lib/utils/imageUtils';
 
 interface Match {
   id: string;
@@ -94,7 +95,7 @@ export default function Matches() {
       loadMatches();
       loadSuperLikes();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const loadMatches = async () => {
     if (!user) return;
@@ -400,7 +401,7 @@ export default function Matches() {
       id: match.other_user.id,
       username: match.other_user.display_name || match.other_user.username,
       bio: match.other_user.bio,
-      avatar_url: match.other_user.twitter_avatar_url || match.other_user.avatar_url,
+      avatar_url: getBestAvatarUrl(match.other_user.twitter_avatar_url, match.other_user.avatar_url),
       twitter_avatar_url: match.other_user.twitter_avatar_url,
       skills: match.other_user.skills || [],
       looking_for: match.other_user.looking_for || [],
@@ -421,7 +422,7 @@ export default function Matches() {
       id: superLike.other_user.id,
       username: superLike.other_user.display_name || superLike.other_user.username,
       bio: superLike.other_user.bio,
-      avatar_url: superLike.other_user.twitter_avatar_url || superLike.other_user.avatar_url,
+      avatar_url: getBestAvatarUrl(superLike.other_user.twitter_avatar_url, superLike.other_user.avatar_url),
       twitter_avatar_url: superLike.other_user.twitter_avatar_url,
       skills: superLike.other_user.skills || [],
       looking_for: superLike.other_user.looking_for || [],
@@ -443,10 +444,10 @@ export default function Matches() {
       onPress={() => handleSuperLikePress(item)}
     >
       <View style={styles.superLikeAvatarContainer}>
-        {item.other_user.twitter_avatar_url || item.other_user.avatar_url ? (
+        {getBestAvatarUrl(item.other_user.twitter_avatar_url, item.other_user.avatar_url) ? (
           <Image
             source={{ 
-              uri: item.other_user.twitter_avatar_url || item.other_user.avatar_url 
+              uri: getBestAvatarUrl(item.other_user.twitter_avatar_url, item.other_user.avatar_url) 
             }}
             style={styles.superLikeAvatar}
           />
@@ -506,10 +507,10 @@ export default function Matches() {
       >
         <View style={styles.matchCard}>
           <View style={styles.avatarContainer}>
-            {item.other_user.twitter_avatar_url || item.other_user.avatar_url ? (
+            {getBestAvatarUrl(item.other_user.twitter_avatar_url, item.other_user.avatar_url) ? (
               <Image
                 source={{ 
-                  uri: item.other_user.twitter_avatar_url || item.other_user.avatar_url 
+                  uri: getBestAvatarUrl(item.other_user.twitter_avatar_url, item.other_user.avatar_url) 
                 }}
                 style={styles.avatar}
                 onLoad={() => console.log('✅ Match avatar loaded for:', item.other_user.username)}

@@ -9,6 +9,7 @@ import Animated, {
   Extrapolate,
 } from 'react-native-reanimated';
 import { AnalyticsService } from '../../lib/services/analyticsService';
+import { getHighResTwitterImage } from '../../lib/utils/imageUtils';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 48;
@@ -135,11 +136,14 @@ export function SwipeCard({ user, index, animatedValue, currentIndex, onCardTap 
     ),
   }));
 
+  // Get high-resolution image URL
+  const highResAvatarUrl = getHighResTwitterImage(user.avatar_url) || user.avatar_url;
+
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
       <View style={styles.card}>
-        {user.avatar_url ? (
-          <Image source={{ uri: user.avatar_url }} style={styles.image} />
+        {highResAvatarUrl ? (
+          <Image source={{ uri: highResAvatarUrl }} style={styles.image} />
         ) : (
           <LinearGradient
             colors={['#9945FF', '#7B3FF2']}
