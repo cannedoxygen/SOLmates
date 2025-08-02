@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Image,
   Alert,
   Linking,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,6 +40,7 @@ export default function ChatRoom() {
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   
   const flatListRef = useRef<FlatList>(null);
@@ -50,10 +52,11 @@ export default function ChatRoom() {
     }
   }, [chatId, user?.id]);
 
-  const loadChatData = async () => {
+  const loadChatData = async (isRefreshing = false) => {
     if (!chatId || !user) return;
 
     try {
+      if (!isRefreshing) setLoading(true);
       // Get current user's Supabase ID
       const { data: currentUser, error: userError } = await supabase
         .from('users')
@@ -92,9 +95,19 @@ export default function ChatRoom() {
     } catch (error) {
       console.error('Failed to load chat data:', error);
     } finally {
-      setLoading(false);
+      if (!isRefreshing) setLoading(false);
     }
   };
+
+  const onRefresh = useCallback(async () => {
+    console.log('🔄 Pull to refresh chat messages');
+    setRefreshing(true);
+    try {
+      await loadChatData(true);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [chatId, user]);
 
   const subscribeToMessages = () => {
     if (!chatId) return;
@@ -366,6 +379,17 @@ export default function ChatRoom() {
           contentContainerStyle={styles.messagesContainer}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
           showsVerticalScrollIndicator={false}
+          inverted={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#9945FF"
+              colors={['#9945FF']}
+              title="Pull to refresh"
+              titleColor="#9945FF"
+            />
+          }
         />
 
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 20 }]}>

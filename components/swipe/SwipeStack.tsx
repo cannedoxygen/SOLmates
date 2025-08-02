@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
@@ -78,33 +78,65 @@ export function SwipeStack({
     }
   }, [currentIndex, users, onSwipeLeft, onSwipeRight, onSuperLike, onNoMoreCards, user?.id]);
 
+  const handleSwipeWithUser = useCallback(async (targetUser: UserProfile, direction: 'left' | 'right' | 'super') => {
+    if (!targetUser) return;
+
+    // Track swipe event
+    if (user?.id) {
+      await AnalyticsService.trackSwipe(user.id, targetUser.id, direction);
+    }
+
+    if (direction === 'left') {
+      onSwipeLeft(targetUser);
+    } else if (direction === 'right') {
+      onSwipeRight(targetUser);
+    } else if (direction === 'super') {
+      onSuperLike?.(targetUser);
+    }
+
+    if (currentIndex === users.length - 1) {
+      onNoMoreCards?.();
+    } else {
+      setCurrentIndex(currentIndex + 1);
+    }
+  }, [currentIndex, users, onSwipeLeft, onSwipeRight, onSuperLike, onNoMoreCards, user?.id]);
+
   const programmaticSwipeLeft = useCallback(() => {
+    const currentUser = users[currentIndex];
+    if (!currentUser) return;
+    
     translateX.value = withSpring(-screenWidth * 1.5, {}, () => {
-      runOnJS(handleSwipe)('left');
+      runOnJS(handleSwipeWithUser)(currentUser, 'left');
       translateX.value = 0;
     });
-  }, [handleSwipe]);
+  }, [handleSwipeWithUser]);
 
   const programmaticSwipeRight = useCallback(() => {
+    const currentUser = users[currentIndex];
+    if (!currentUser) return;
+    
     translateX.value = withSpring(screenWidth * 1.5, {}, () => {
-      runOnJS(handleSwipe)('right');
+      runOnJS(handleSwipeWithUser)(currentUser, 'right');
       translateX.value = 0;
     });
-  }, [handleSwipe]);
+  }, [handleSwipeWithUser]);
 
   const programmaticSuperLike = useCallback(() => {
+    const currentUser = users[currentIndex];
+    if (!currentUser) return;
+    
     // Super like with a special animation (scale up slightly)
     translateX.value = withSpring(0, {}, () => {
-      runOnJS(handleSwipe)('super');
+      runOnJS(handleSwipeWithUser)(currentUser, 'super');
     });
-  }, [handleSwipe]);
+  }, [handleSwipeWithUser]);
 
   // Expose programmatic swipe functions to parent
   useEffect(() => {
     if (onProgrammaticSwipe) {
       onProgrammaticSwipe(programmaticSwipeLeft, programmaticSwipeRight, programmaticSuperLike);
     }
-  }, [onProgrammaticSwipe, programmaticSwipeLeft, programmaticSwipeRight, programmaticSuperLike]);
+  }, [onProgrammaticSwipe]);
 
   const gestureHandler = useAnimatedGestureHandler<
     PanGestureHandlerGestureEvent,
@@ -116,8 +148,9 @@ export function SwipeStack({
       context.moved = false;
     },
     onActive: (event, context) => {
-      // Check if this is a significant movement (not just a tap)
-      if (Math.abs(event.translationX) > 10 || Math.abs(event.translationY) > 10) {
+      // More sensitive movement detection for physical devices
+      const movementThreshold = Platform.OS === 'ios' ? 5 : 3;
+      if (Math.abs(event.translationX) > movementThreshold || Math.abs(event.translationY) > movementThreshold) {
         context.moved = true;
         translateX.value = context.startX + event.translationX;
       }
@@ -143,14 +176,17 @@ export function SwipeStack({
         translateX.value > SWIPE_THRESHOLD || 
         event.velocityX > SWIPE_VELOCITY;
 
+      // Capture the current user BEFORE starting animation to prevent race conditions
+      const currentUser = users[currentIndex];
+      
       if (shouldSwipeLeft) {
         translateX.value = withSpring(-screenWidth * 1.5, {}, () => {
-          runOnJS(handleSwipe)('left');
+          runOnJS(handleSwipeWithUser)(currentUser, 'left');
           translateX.value = 0;
         });
       } else if (shouldSwipeRight) {
         translateX.value = withSpring(screenWidth * 1.5, {}, () => {
-          runOnJS(handleSwipe)('right');
+          runOnJS(handleSwipeWithUser)(currentUser, 'right');
           translateX.value = 0;
         });
       } else {
@@ -177,7 +213,15 @@ export function SwipeStack({
 
   return (
     <View style={styles.container}>
-      <PanGestureHandler onGestureEvent={gestureHandler}>
+      <PanGestureHandler 
+        onGestureEvent={gestureHandler}
+        activeOffsetX={Platform.OS === 'ios' ? [-3, 3] : [-2, 2]}
+        failOffsetY={Platform.OS === 'ios' ? [-15, 15] : [-10, 10]}
+        maxPointers={1}
+        minPointers={1}
+        shouldCancelWhenOutside={false}
+        enableTrackpadTwoFingerGesture={false}
+      >
         <Animated.View style={styles.stack}>
           {renderCards()}
         </Animated.View>

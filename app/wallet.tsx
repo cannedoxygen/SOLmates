@@ -245,7 +245,7 @@ export default function Wallet() {
         return;
       }
 
-      console.log('❌ No SPL tokens found, showing SOL only');
+      // No SPL tokens found, showing SOL only
       // If no SPL tokens found, at least show SOL
       const solOnly = [
         {
@@ -374,19 +374,16 @@ export default function Wallet() {
         setRecentTransactions(processedTransactions);
         console.log('✅ Processed transactions:', processedTransactions.length, processedTransactions.slice(0, 2));
       } else {
-        console.log('❌ No transactions found in enhanced response, trying fallback');
-        throw new Error('No transactions in response');
+        // No transactions found - normal for new wallets
       }
     } catch (error) {
-      console.error('❌ Failed to fetch enhanced transactions:', error);
+      // Failed to fetch transactions - try fallbacks
       
       // Fallback 1: Try basic transactions endpoint
       try {
-        console.log('🔄 Trying basic transactions endpoint...');
+        // Try basic transactions endpoint
         const basicResponse = await fetch(`https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=20`);
         const basicData = await basicResponse.json();
-        
-        console.log('📋 Basic transactions response:', basicData);
         
         if (basicData && basicData.length > 0) {
           // Process basic transaction format
@@ -411,7 +408,7 @@ export default function Wallet() {
       
       // Fallback 2: Try direct RPC call to get recent signatures
       try {
-        console.log('🔄 Trying direct RPC for signatures...');
+        // Try direct RPC for signatures
         const rpcResponse = await fetch(connection.rpcEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -424,7 +421,6 @@ export default function Wallet() {
         });
         
         const rpcData = await rpcResponse.json();
-        console.log('📋 RPC signatures response:', rpcData);
         
         if (rpcData.result && rpcData.result.length > 0) {
           const rpcTransactions = rpcData.result.map((sig: any, index: number) => ({
@@ -437,13 +433,13 @@ export default function Wallet() {
           }));
           
           setRecentTransactions(rpcTransactions);
-          console.log('✅ RPC transactions processed:', rpcTransactions.length);
+          // RPC transactions processed
         } else {
-          console.log('❌ No transactions found from any source');
+          // No transactions found - normal for new wallets
           setRecentTransactions([]);
         }
       } catch (rpcError) {
-        console.error('❌ RPC transaction fetch failed:', rpcError);
+        // RPC fetch failed - wallet likely has no transactions
         setRecentTransactions([]);
       }
     }

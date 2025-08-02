@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   Pressable,
   ActivityIndicator,
   Image,
+  ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -23,6 +25,7 @@ export default function ChatsScreen() {
   const { user } = usePrivy();
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
 
   useEffect(() => {
@@ -31,33 +34,59 @@ export default function ChatsScreen() {
     }
   }, [user?.id]);
 
-  const loadChats = async () => {
+  const loadChats = async (isRefreshing = false) => {
     if (!user) return;
 
     try {
+      if (!isRefreshing) setLoading(true);
       // Get current user's profile
+      console.log('🔍 Debug: Loading chats for Privy user:', user.id);
       const userProfile = await ProfileService.getUserProfile(user.id);
       if (!userProfile) {
         console.error('No user profile found');
         setLoading(false);
         return;
       }
+      console.log('🔍 Debug: Current user profile:', userProfile);
       setCurrentUserProfile(userProfile);
 
       // Get all chats
       const userChats = await ChatService.getUserChats(userProfile.id);
+      console.log('🔍 Debug: User chats loaded:', userChats.length);
+      userChats.forEach((chat, i) => {
+        console.log(`🔍 Chat ${i + 1}: other_user is`, chat.other_user?.username);
+      });
       setChats(userChats);
     } catch (error) {
       console.error('Failed to load chats:', error);
     } finally {
-      setLoading(false);
+      if (!isRefreshing) setLoading(false);
     }
   };
 
-  const formatLastMessage = (message?: string) => {
-    if (!message) return 'Start a conversation';
-    if (message === '🔐 Encrypted message') return message;
-    return message.length > 40 ? message.substring(0, 40) + '...' : message;
+  const onRefresh = useCallback(async () => {
+    console.log('🔄 Pull to refresh chats');
+    setRefreshing(true);
+    try {
+      await loadChats(true);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [user]);
+
+  const formatLastMessage = (chat: Chat) => {
+    if (!chat.last_message) return 'Start a conversation';
+    if (chat.last_message === '🔐 Encrypted message') return chat.last_message;
+    
+    const message = chat.last_message;
+    const truncatedMessage = message.length > 40 ? message.substring(0, 40) + '...' : message;
+    
+    // Show "You: message" if current user sent it, otherwise just show the message
+    if (chat.last_message_sender_id && currentUserProfile && chat.last_message_sender_id === currentUserProfile.id) {
+      return `You: ${truncatedMessage}`;
+    }
+    
+    return truncatedMessage;
   };
 
   const formatMessageTime = (dateString?: string) => {
@@ -88,13 +117,14 @@ export default function ChatsScreen() {
           styles.chatItem,
           pressed && styles.chatItemPressed,
         ]}
-        onPress={() => router.push(`/chat/${item.other_user.id}`)}
+        onPress={() => router.push(`/chat/${item.id}`)}
       >
         <View style={styles.avatarContainer}>
           {getBestAvatarUrl(item.other_user.twitter_avatar_url, item.other_user.avatar_url) ? (
             <Image
               source={{ uri: getBestAvatarUrl(item.other_user.twitter_avatar_url, item.other_user.avatar_url) }}
               style={styles.avatar}
+              onLoad={() => console.log(`✅ Loading avatar for: ${item.other_user.username}`)}
             />
           ) : (
             <View
@@ -119,7 +149,7 @@ export default function ChatsScreen() {
           
           <View style={styles.messagePreview}>
             <Text style={styles.lastMessage} numberOfLines={1}>
-              {formatLastMessage(item.last_message)}
+              {formatLastMessage(item)}
             </Text>
             {item.last_message === '🔐 Encrypted message' && (
               <Ionicons name="lock-closed" size={12} color="#4CAF50" style={styles.encryptIcon} />
@@ -153,19 +183,33 @@ export default function ChatsScreen() {
         </View>
 
         {chats.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="chatbubbles-outline" size={64} color="#666666" />
-            <Text style={styles.emptyTitle}>No chats yet</Text>
-            <Text style={styles.emptyText}>
-              Match with people to start chatting
-            </Text>
-            <Pressable
-              style={styles.discoverButton}
-              onPress={() => router.push('/(tabs)/discover')}
-            >
-              <Text style={styles.discoverButtonText}>Discover People</Text>
-            </Pressable>
-          </View>
+          <ScrollView
+            contentContainerStyle={styles.emptyScrollContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#9945FF"
+                colors={['#9945FF']}
+                title="Pull to refresh"
+                titleColor="#9945FF"
+              />
+            }
+          >
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubbles-outline" size={64} color="#666666" />
+              <Text style={styles.emptyTitle}>No chats yet</Text>
+              <Text style={styles.emptyText}>
+                Match with people to start chatting
+              </Text>
+              <Pressable
+                style={styles.discoverButton}
+                onPress={() => router.push('/(tabs)/discover')}
+              >
+                <Text style={styles.discoverButtonText}>Discover People</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
         ) : (
           <FlatList
             data={chats}
@@ -173,6 +217,16 @@ export default function ChatsScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#9945FF"
+                colors={['#9945FF']}
+                title="Pull to refresh"
+                titleColor="#9945FF"
+              />
+            }
           />
         )}
       </View>
@@ -283,11 +337,15 @@ const styles = StyleSheet.create({
   encryptIcon: {
     marginLeft: 6,
   },
+  emptyScrollContent: {
+    flex: 1,
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 48,
+    minHeight: 400,
   },
   emptyTitle: {
     fontSize: 20,

@@ -32,7 +32,7 @@ export default function Chat() {
     if (user) {
       loadChatRooms();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const loadChatRooms = async () => {
     if (!user) return;

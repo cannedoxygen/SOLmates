@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, Pressable, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrivy } from '@privy-io/expo';
@@ -156,7 +156,7 @@ export function SwipeCard({ user, index, animatedValue, currentIndex, onCardTap 
         )}
 
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.8)']}
+          colors={Platform.OS === 'ios' ? ['transparent', 'rgba(0,0,0,0.3)'] : ['transparent', 'rgba(0,0,0,0.2)']}
           style={styles.gradient}
         >
           <View style={styles.content}>

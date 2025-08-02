@@ -249,16 +249,50 @@ export default function Discover() {
         
       if (reciprocalSwipe) {
         // It's a match! Create the match record with proper liked fields
-        const { data: match } = await supabase
+        // Use consistent ordering to avoid duplicate matches with different user order
+        const user1_id = currentUserProfile.id < swipedUser.id ? currentUserProfile.id : swipedUser.id;
+        const user2_id = currentUserProfile.id < swipedUser.id ? swipedUser.id : currentUserProfile.id;
+        
+        // First check if match already exists
+        const { data: existingMatch } = await supabase
+          .from('matches')
+          .select('*')
+          .eq('user1_id', user1_id)
+          .eq('user2_id', user2_id)
+          .single();
+          
+        if (existingMatch) {
+          console.log('✅ Match already exists:', existingMatch.id);
+          // Still show the match alert since this is the first time this user is seeing it
+          Alert.alert(
+            "It's a Match! 🎉",
+            `You and ${swipedUser.username} liked each other!`,
+            [
+              { text: 'Keep Swiping', style: 'cancel' },
+              { text: 'Send Message', onPress: () => {
+                // Navigate to chat
+                console.log('💬 Opening chat with:', swipedUser.username);
+              }},
+            ]
+          );
+          return;
+        }
+        
+        const { data: match, error: matchError } = await supabase
           .from('matches')
           .insert([{
-            user1_id: currentUserProfile.id,
-            user2_id: swipedUser.id,
+            user1_id,
+            user2_id,
             user1_liked: true,
             user2_liked: true,
             matched_at: new Date().toISOString(),
           }])
           .select();
+          
+        if (matchError) {
+          console.error('❌ Failed to create match:', matchError);
+          // Don't return here - still show the match notification to the user
+        }
           
         // Track match creation
         if (user?.id && match?.[0]) {
@@ -363,16 +397,49 @@ export default function Discover() {
         
       if (reciprocalSwipe) {
         // It's a match! Create the match record
-        const { data: match } = await supabase
+        // Use consistent ordering to avoid duplicate matches with different user order
+        const user1_id = currentUserProfile.id < swipedUser.id ? currentUserProfile.id : swipedUser.id;
+        const user2_id = currentUserProfile.id < swipedUser.id ? swipedUser.id : currentUserProfile.id;
+        
+        // First check if match already exists
+        const { data: existingMatch } = await supabase
+          .from('matches')
+          .select('*')
+          .eq('user1_id', user1_id)
+          .eq('user2_id', user2_id)
+          .single();
+          
+        if (existingMatch) {
+          console.log('✅ Match already exists:', existingMatch.id);
+          // Still show the match alert since this is the first time this user is seeing it
+          Alert.alert(
+            "Super Match! ⭐",
+            `Your Super Like matched with ${swipedUser.username}!`,
+            [
+              { text: 'Keep Swiping', style: 'cancel' },
+              { text: 'Send Message', onPress: () => {
+                console.log('💬 Opening chat with:', swipedUser.username);
+              }},
+            ]
+          );
+          return;
+        }
+        
+        const { data: match, error: matchError } = await supabase
           .from('matches')
           .insert([{
-            user1_id: currentUserProfile.id,
-            user2_id: swipedUser.id,
+            user1_id,
+            user2_id,
             user1_liked: true,
             user2_liked: true,
             matched_at: new Date().toISOString(),
           }])
           .select();
+          
+        if (matchError) {
+          console.error('❌ Failed to create match:', matchError);
+          // Don't return here - still show the match notification to the user
+        }
           
         // Track match creation
         if (user?.id && match?.[0]) {
@@ -473,28 +540,30 @@ export default function Discover() {
       colors={['#0A0E27', '#1A1F3A']}
       style={styles.container}
     >
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#9945FF"
-            colors={['#9945FF']}
-            title="Pull to refresh"
-            titleColor="#9945FF"
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[styles.header, glassEffects.subtleGlass, { padding: 20, marginHorizontal: 24, marginBottom: 20 }]}>
-          <Text style={styles.title}>Discover</Text>
-          <Text style={styles.subtitle}>Swipe right to connect</Text>
-        </View>
+      {/* Fixed Header */}
+      <View style={[styles.header, glassEffects.subtleGlass, { padding: 20, marginHorizontal: 24, marginTop: insets.top + 20, marginBottom: 20 }]}>
+        <Text style={styles.title}>Discover</Text>
+        <Text style={styles.subtitle}>Swipe right to connect</Text>
+      </View>
 
-        <View style={styles.swipeContainer}>
-          {noMoreCards ? (
+      {/* Swipe Area - No ScrollView interference */}
+      <View style={styles.swipeContainer}>
+        {noMoreCards ? (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.content]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#9945FF"
+                colors={['#9945FF']}
+                title="Pull to refresh"
+                titleColor="#9945FF"
+              />
+            }
+            showsVerticalScrollIndicator={false}
+          >
             <Animated.View 
               entering={FadeIn}
               exiting={FadeOut}
@@ -505,32 +574,45 @@ export default function Discover() {
                 Pull down to check for new profiles!
               </Text>
             </Animated.View>
-          ) : (
-            <>
-              <SwipeStack
-                users={users}
-                onSwipeLeft={handleSwipeLeft}
-                onSwipeRight={handleSwipeRight}
-                onSuperLike={handleSuperLike}
-                onNoMoreCards={handleNoMoreCards}
-                onCardTap={handleCardTap}
-                onProgrammaticSwipe={handleProgrammaticSwipe}
+          </ScrollView>
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.swipeScrollContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#9945FF"
+                colors={['#9945FF']}
+                title="Pull to refresh"
+                titleColor="#9945FF"
               />
-              <SwipeActions
-                onReject={() => {
-                  swipeFunctions?.swipeLeft();
-                }}
-                onLike={() => {
-                  swipeFunctions?.swipeRight();
-                }}
-                onSuperLike={() => {
-                  swipeFunctions?.superLike();
-                }}
-              />
-            </>
-          )}
-        </View>
-      </ScrollView>
+            }
+            scrollEnabled={false}
+          >
+            <SwipeStack
+              users={users}
+              onSwipeLeft={handleSwipeLeft}
+              onSwipeRight={handleSwipeRight}
+              onSuperLike={handleSuperLike}
+              onNoMoreCards={handleNoMoreCards}
+              onCardTap={handleCardTap}
+              onProgrammaticSwipe={handleProgrammaticSwipe}
+            />
+            <SwipeActions
+              onReject={() => {
+                swipeFunctions?.swipeLeft();
+              }}
+              onLike={() => {
+                swipeFunctions?.swipeRight();
+              }}
+              onSuperLike={() => {
+                swipeFunctions?.superLike();
+              }}
+            />
+          </ScrollView>
+        )}
+      </View>
 
       {/* Profile Card Viewer Modal */}
       {selectedProfile && (
@@ -599,6 +681,9 @@ const styles = StyleSheet.create({
     color: '#B8B8B8',
   },
   swipeContainer: {
+    flex: 1,
+  },
+  swipeScrollContent: {
     flex: 1,
   },
   loadingContainer: {

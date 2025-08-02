@@ -203,14 +203,50 @@ export class ChatService {
 
       if (error) throw error;
 
-      // Transform to include other_user
-      const transformedChats = chats?.map(chat => {
-        const otherUser = chat.user1_id === userId ? chat.user2 : chat.user1;
-        return {
-          ...chat,
-          other_user: otherUser
-        };
-      }) || [];
+      // Transform to include other_user and fetch latest message if needed
+      const transformedChats = await Promise.all(
+        (chats || []).map(async (chat) => {
+          const otherUser = chat.user1_id === userId ? chat.user2 : chat.user1;
+          
+          // Fetch the latest message to get sender info
+          let lastMessage = chat.last_message;
+          let lastMessageAt = chat.last_message_at;
+          let lastMessageSenderId = null;
+          
+          const { data: latestMessages } = await supabase
+            .from('messages')
+            .select('content, created_at, sender_id')
+            .eq('chat_id', chat.id)
+            .order('created_at', { ascending: false })
+            .limit(1);
+          
+          if (latestMessages && latestMessages.length > 0) {
+            const latest = latestMessages[0];
+            lastMessage = latest.content;
+            lastMessageAt = latest.created_at;
+            lastMessageSenderId = latest.sender_id;
+            
+            // Update the database if needed
+            if (!chat.last_message) {
+              await supabase
+                .from('chats')
+                .update({
+                  last_message: latest.content.substring(0, 50) + (latest.content.length > 50 ? '...' : ''),
+                  last_message_at: latest.created_at
+                })
+                .eq('id', chat.id);
+            }
+          }
+          
+          return {
+            ...chat,
+            last_message: lastMessage,
+            last_message_at: lastMessageAt,
+            last_message_sender_id: lastMessageSenderId,
+            other_user: otherUser
+          };
+        })
+      );
 
       console.log('💬 Found user chats:', transformedChats.length);
       return transformedChats;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +28,7 @@ export default function Profile() {
   const { disconnect, address } = useWallet();
   const [showProfileViewer, setShowProfileViewer] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Extract Twitter and wallet data from linked_accounts
   const twitterAccount = user?.linked_accounts?.find(account => account.type === 'twitter_oauth');
@@ -223,6 +225,63 @@ export default function Profile() {
     loadSupabaseProfile();
   }, [user?.id]);
 
+  const onRefresh = useCallback(async () => {
+    console.log('🔄 Pull to refresh profile');
+    setRefreshing(true);
+    try {
+      // Reload stats and profile data
+      if (!user?.id) return;
+      
+      // Get the Supabase user ID for this Privy user
+      const { data: supabaseUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('privy_user_id', user.id)
+        .single();
+        
+      if (!supabaseUser) return;
+      
+      // Reload matches count
+      const { count: matchesCount } = await supabase
+        .from('matches')
+        .select('*', { count: 'exact', head: true })
+        .or(`user1_id.eq.${supabaseUser.id},user2_id.eq.${supabaseUser.id}`);
+      
+      // Reload badges count
+      let badgesCount = 0;
+      try {
+        const { count } = await supabase
+          .from('user_badges')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', supabaseUser.id);
+        badgesCount = count || 0;
+      } catch (badgeError) {
+        // Badges table may not exist
+      }
+      
+      // Reload projects count
+      let projectsCount = 0;
+      try {
+        const { count } = await supabase
+          .from('project_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', supabaseUser.id);
+        projectsCount = count || 0;
+      } catch (projectError) {
+        // Project members table may not exist
+      }
+      
+      setStats({
+        matches: matchesCount || 0,
+        badges: badgesCount,
+        projects: projectsCount
+      });
+      
+    } finally {
+      setRefreshing(false);
+    }
+  }, [user?.id]);
+
   const handleSignOut = async () => {
     Alert.alert(
       'Sign Out',
@@ -304,6 +363,16 @@ export default function Profile() {
           { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#9945FF"
+            colors={['#9945FF']}
+            title="Pull to refresh"
+            titleColor="#9945FF"
+          />
+        }
       >
         <View style={styles.header}>
           <View style={styles.profileSection}>

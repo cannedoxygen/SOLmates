@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { usePrivy, useEmbeddedSolanaWallet } from '@privy-io/expo';
+import { usePrivy } from '@privy-io/expo';
 import { ProfileService } from '../../lib/services/profileService';
 import { supabase } from '../../lib/supabase/client';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,7 +35,6 @@ export default function Onboarding() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = usePrivy();
-  const { wallets } = useEmbeddedSolanaWallet();
   
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState('');
@@ -153,9 +152,49 @@ export default function Onboarding() {
         userId: user.id
       });
       
-      // First ensure user is synced to Supabase
+      // Get wallet address from Privy user's linked accounts
+      console.log('🔍 Looking for embedded wallet in user.linked_accounts...');
+      let walletAccount = user.linked_accounts?.find(account => account.type === 'wallet');
+      let walletAddress = walletAccount?.address;
+      
+      // If no wallet found, wait for it to be created (Privy creates wallets asynchronously)
+      if (!walletAddress) {
+        console.log('⏳ Wallet not found immediately, waiting for creation...');
+        
+        // Wait up to 15 seconds for wallet creation
+        const maxWaitTime = 15000;
+        const startTime = Date.now();
+        
+        while (!walletAddress && (Date.now() - startTime) < maxWaitTime) {
+          // Re-check for wallet
+          walletAccount = user.linked_accounts?.find(account => account.type === 'wallet');
+          walletAddress = walletAccount?.address;
+          
+          if (walletAddress) {
+            console.log('✅ Wallet found after waiting:', walletAddress);
+            break;
+          }
+          
+          // Wait 500ms before checking again
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      console.log('💰 Final wallet address:', walletAddress);
+      
+      if (!walletAddress) {
+        console.error('❌ No wallet address found after waiting');
+        console.error('❌ User linked accounts:', user.linked_accounts);
+        Alert.alert(
+          'Wallet Creation In Progress', 
+          'Your wallet is still being created. This usually takes a few seconds. Please wait a moment and try again, or log out and back in if the issue persists.'
+        );
+        return;
+      }
+      
+      // First ensure user is synced to Supabase with the correct wallet address
       console.log('🔄 Ensuring user is synced to Supabase...');
-      await ProfileService.syncPrivyUser(user, wallets?.[0]?.address);
+      await ProfileService.syncPrivyUser(user, walletAddress);
       
       const result = await ProfileService.updateUserProfile(user.id, {
         username: username.trim(),

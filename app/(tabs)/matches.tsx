@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -86,6 +87,7 @@ export default function Matches() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [superLikes, setSuperLikes] = useState<SuperLike[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showProfileViewer, setShowProfileViewer] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [selectedSuperLike, setSelectedSuperLike] = useState<SuperLike | null>(null);
@@ -97,10 +99,24 @@ export default function Matches() {
     }
   }, [user?.id]);
 
-  const loadMatches = async () => {
+  const onRefresh = useCallback(async () => {
+    console.log('🔄 Pull to refresh matches');
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        loadMatches(true),
+        loadSuperLikes(true)
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [user]);
+
+  const loadMatches = async (isRefreshing = false) => {
     if (!user) return;
 
     try {
+      if (!isRefreshing) setLoading(true);
       // First get the Supabase user ID for this Privy user
       const { data: currentUser, error: userError } = await supabase
         .from('users')
@@ -162,11 +178,11 @@ export default function Matches() {
     } catch (error) {
       console.error('Failed to load matches:', error);
     } finally {
-      setLoading(false);
+      if (!isRefreshing) setLoading(false);
     }
   };
 
-  const loadSuperLikes = async () => {
+  const loadSuperLikes = async (isRefreshing = false) => {
     if (!user) return;
 
     try {
@@ -628,13 +644,27 @@ export default function Matches() {
           )}
           
           {matches.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="people-outline" size={64} color="#666666" />
-              <Text style={styles.emptyTitle}>No matches yet</Text>
-              <Text style={styles.emptyText}>
-                Keep swiping to find your perfect collaborators
-              </Text>
-            </View>
+            <ScrollView
+              contentContainerStyle={styles.emptyScrollContent}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#9945FF"
+                  colors={['#9945FF']}
+                  title="Pull to refresh"
+                  titleColor="#9945FF"
+                />
+              }
+            >
+              <View style={styles.emptyContainer}>
+                <Ionicons name="people-outline" size={64} color="#666666" />
+                <Text style={styles.emptyTitle}>No matches yet</Text>
+                <Text style={styles.emptyText}>
+                  Keep swiping to find your perfect collaborators
+                </Text>
+              </View>
+            </ScrollView>
           ) : (
             <FlatList
               data={matches}
@@ -642,6 +672,16 @@ export default function Matches() {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#9945FF"
+                  colors={['#9945FF']}
+                  title="Pull to refresh"
+                  titleColor="#9945FF"
+                />
+              }
             />
           )}
         </View>
@@ -835,11 +875,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  emptyScrollContent: {
+    flex: 1,
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 48,
+    minHeight: 400,
   },
   emptyTitle: {
     fontSize: 20,

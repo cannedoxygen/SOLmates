@@ -131,8 +131,8 @@ export function ProfileCardViewer({
     },
     onActive: (event) => {
       console.log('🔥 ProfileCardViewer PAN GESTURE ACTIVE:', event.translationX);
-      // Only handle horizontal gestures, allow vertical scrolling
-      const isHorizontalGesture = Math.abs(event.translationX) > Math.abs(event.translationY);
+      // Only handle horizontal gestures after significant horizontal movement
+      const isHorizontalGesture = Math.abs(event.translationX) > Math.abs(event.translationY) && Math.abs(event.translationX) > 10;
       if (isHorizontalGesture) {
         translateX.value = -(currentCardIndexShared.value * screenWidth) + event.translationX;
       }
@@ -209,7 +209,11 @@ export function ProfileCardViewer({
         {/* Card Container - EXACT structure from profile-card.tsx */}
         <View style={styles.cardContainer}>
           <View style={styles.cardViewport}>
-            <PanGestureHandler onGestureEvent={panGestureHandler}>
+            <PanGestureHandler 
+              onGestureEvent={panGestureHandler}
+              activeOffsetX={[-10, 10]}
+              failOffsetY={[-10, 10]}
+            >
               <Animated.View style={[styles.cardsWrapper, cardsAnimatedStyle]}>
                 {cardArray.map((card, index) => {
                   console.log('🔥 Rendering card:', card.title, 'at index:', index);

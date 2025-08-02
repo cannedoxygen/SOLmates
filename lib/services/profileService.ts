@@ -137,7 +137,22 @@ export class ProfileService {
 
         if (createError) {
           console.error('❌ Create error during sync:', createError);
-          throw createError;
+          // Check if it's a unique constraint error
+          if (createError.code === '23505') {
+            console.log('🔄 User already exists, attempting to fetch...');
+            // Try to fetch the user again
+            const { data: retryUser, error: retryError } = await supabase
+              .from('users')
+              .select('*')
+              .eq('privy_user_id', privyUser.id)
+              .single();
+            
+            if (!retryError && retryUser) {
+              console.log('✅ Found user on retry:', retryUser.id);
+              return retryUser;
+            }
+          }
+          throw new Error(`Failed to create user: ${createError.message}`);
         }
         
         console.log('✅ Created new user in Supabase:', newUser.id);
@@ -145,6 +160,12 @@ export class ProfileService {
       }
     } catch (error) {
       console.error('❌ Failed to sync Privy user with Supabase:', error);
+      console.error('Full error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     }
   }

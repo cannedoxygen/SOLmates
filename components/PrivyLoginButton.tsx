@@ -1,64 +1,210 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { usePrivy, useLoginWithOAuth } from '@privy-io/expo';
+import { usePrivy, useLoginWithOAuth, useEmbeddedSolanaWallet } from '@privy-io/expo';
 
 export default function PrivyLoginButton() {
   const privyHookResult = usePrivy();
   const { isReady, user, logout, getAccessToken } = privyHookResult;
-  const { login } = useLoginWithOAuth();
+  const { wallets: solanaWallets, create: createSolanaWallet } = useEmbeddedSolanaWallet();
+  const { login } = useLoginWithOAuth({
+    onSuccess: async (user, isNewUser) => {
+      try {
+      
+        // Create embedded Solana wallet using proper hook
+        
+        let walletAddress = null;
+        
+        // Check if we have a Solana wallet from the hook
+        if (solanaWallets && solanaWallets.length > 0) {
+          walletAddress = solanaWallets[0].address;
+          // Wallet already exists
+        } else {
+          try {
+            // Create the first Solana wallet for the user
+            const provider = await createSolanaWallet();
+            
+            // Re-check wallets after creation
+            if (solanaWallets && solanaWallets.length > 0) {
+              walletAddress = solanaWallets[0].address;
+              // Successfully created wallet
+            } else {
+              // Wait for wallet to appear in array
+              
+              // Wait a bit for the wallet to appear in the array
+              const maxWaitTime = 10000; // 10 seconds
+              const checkInterval = 500; // Check every 500ms
+              const startTime = Date.now();
+              
+              while (!walletAddress && (Date.now() - startTime) < maxWaitTime) {
+                if (solanaWallets && solanaWallets.length > 0) {
+                  walletAddress = solanaWallets[0].address;
+                  // Wallet now visible
+                  break;
+                }
+                
+                const elapsed = Date.now() - startTime;
+                // Still waiting...
+                
+                await new Promise(resolve => setTimeout(resolve, checkInterval));
+              }
+            }
+          } catch (createError) {
+            console.error('Failed to create embedded wallet:', createError);
+          }
+        }
+        
+        // Auto-sync user with Supabase
+        // Import these at the top of the file when needed
+        const { ProfileService } = await import('../lib/services/profileService');
+        const { SessionManager } = await import('../lib/services/sessionManager');
+        
+        try {
+          // Sync user even without wallet - allows Privy to create wallet without interference
+          console.log('🔄 Starting profile sync for user:', user.id);
+          const supabaseProfile = await ProfileService.syncPrivyUser(user, walletAddress);
+          console.log('✅ Profile synced successfully:', supabaseProfile.id);
+          
+          // If no wallet was found initially, wait a bit more and check again
+          if (!walletAddress) {
+            // Check again for wallet after brief delay
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 more seconds
+            
+            const walletAccount = user.linked_accounts?.find(account => account.type === 'wallet');
+            if (walletAccount?.address) {
+              // Update profile with wallet address
+              try {
+                await ProfileService.updateUserWallet(user.id, walletAccount.address);
+              } catch (updateError) {
+                // Wallet update failed, but user can continue
+              }
+            }
+          }
+          
+          // Start analytics session
+          const sessionManager = SessionManager.getInstance();
+          await sessionManager.startSession(user.id);
+        } catch (syncError) {
+          console.error('❌ Profile sync failed:', syncError);
+          
+          // Retry sync after delay
+          setTimeout(async () => {
+            try {
+              console.log('🔄 Retrying profile sync...');
+              const retryProfile = await ProfileService.syncPrivyUser(user, walletAddress);
+              console.log('✅ Profile sync succeeded on retry:', retryProfile.id);
+            } catch (retryError) {
+              console.error('❌ Profile sync retry failed:', retryError);
+              // Log to analytics or error tracking service
+              Alert.alert(
+                'Profile Sync Issue',
+                'There was an issue syncing your profile. Please try logging in again.',
+                [{ text: 'OK' }]
+              );
+            }
+          }, 3000); // Retry after 3 seconds
+        }
+      } catch (onSuccessError) {
+        console.error('Login callback error:', onSuccessError);
+      }
+    },
+    onError: (error) => {
+      console.error('Login error:', error);
+    }
+  });
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [error, setError] = useState(null);
   
-  console.log('🔍 Full Privy hook result:', privyHookResult);
 
   const handleLogin = async () => {
-    console.log('🔵 Starting OAuth login...');
-    console.log('🔍 App Bundle ID (Android):', 'com.solmates');
-    console.log('🔍 Environment Check:', {
-      appId: process.env.EXPO_PUBLIC_PRIVY_APP_ID,
-      appSecret: process.env.EXPO_PUBLIC_PRIVY_APP_SECRET ? 'SET' : 'MISSING',
-      projectId: process.env.EXPO_PUBLIC_PROJECT_ID
-    });
-    console.log('🔍 Privy Configuration:', {
-      isReady,
-      hasUser: !!user
-    });
+    setIsLoggingIn(true);
+    setError(null);
     
     try {
-      console.log('🚀 Calling login function...');
-      console.log('🔍 Pre-login - Privy internal state check');
-      console.log('🔍 Pre-login - isReady:', isReady);
-      console.log('🔍 Pre-login - user:', user);
       
-      // Force web OAuth to bypass native app ID validation
-      console.log('🌐 Trying web-only OAuth flow...');
-      const result = await login({ 
-        provider: 'twitter',
-        disableSignup: false,
-        loginRedirectUrl: 'solmates'
+      // Add timeout wrapper to catch hanging requests
+      const loginWithTimeout = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Login timeout - Privy OAuth took too long (30s)'));
+        }, 30000);
+
+        
+        login({ 
+          provider: 'twitter'
+        }).then(result => {
+          clearTimeout(timeout);
+          resolve(result);
+        }).catch(err => {
+          clearTimeout(timeout);
+          reject(err);
+        });
       });
-      console.log('✅ Login function completed successfully');
-      console.log('✅ Login result:', result);
+
+      const result = await loginWithTimeout;
     } catch (error) {
-      console.error('💥 Login function error:', error);
-      console.error('💥 Error type:', error.constructor.name);
-      console.error('💥 Error message:', error.message);
-      console.error('💥 Error stack:', error.stack);
-      console.error('💥 Full error object:', JSON.stringify(error, null, 2));
       
+      // Show user-friendly error message
+      if (error.message.includes('timeout') || error.message.includes('Ping reached timeout')) {
+        setError('Connection timeout. Please check your internet and try again.');
+        Alert.alert(
+          'Connection Timeout', 
+          'The login request timed out. Please check your internet connection and try again.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        setError('Login failed. Please try again.');
+        Alert.alert(
+          'Login Failed', 
+          'There was an error logging in. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
-  // Debug the ready state
-  console.log('🔍 PrivyLoginButton - isReady state:', isReady);
-  console.log('🔍 PrivyLoginButton - user:', user);
 
   // Show loading state during OAuth flow
   if (!isReady) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading Privy... (ready: {String(isReady)})</Text>
+        <ActivityIndicator size="large" color="#9945FF" />
       </View>
     );
+  }
+
+  // If user exists but has no embedded Solana wallet, show logout option
+  if (user) {
+    const hasEmbeddedWallet = solanaWallets && solanaWallets.length > 0;
+    if (!hasEmbeddedWallet) {
+      return (
+        <View style={styles.container}>
+          <View style={styles.loginContainer}>
+            <Text style={styles.title}>Wallet Issue Detected</Text>
+            <Text style={styles.subtitle}>
+              You're logged in but don't have an embedded wallet. Please log out and log back in to fix this.
+            </Text>
+            
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={async () => {
+                await logout();
+              }}
+            >
+              <LinearGradient
+                colors={['#FF6B6B', '#EE5A5A']}
+                style={styles.gradient}
+              >
+                <View style={styles.buttonContent}>
+                  <Text style={styles.buttonText}>Log Out & Try Again</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
   }
 
   return (
@@ -70,19 +216,38 @@ export default function PrivyLoginButton() {
         </Text>
         
         <TouchableOpacity
-          style={styles.loginButton}
+          style={[styles.loginButton, isLoggingIn && styles.loginButtonDisabled]}
           onPress={handleLogin}
+          disabled={isLoggingIn}
         >
           <LinearGradient
-            colors={['#1DA1F2', '#0d8bd9']}
+            colors={isLoggingIn ? ['#666666', '#555555'] : ['#1DA1F2', '#0d8bd9']}
             style={styles.gradient}
           >
             <View style={styles.buttonContent}>
-              <Text style={styles.twitterIcon}>🐦</Text>
-              <Text style={styles.buttonText}>Continue with Twitter</Text>
+              {isLoggingIn ? (
+                <>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={[styles.buttonText, {marginLeft: 10}]}>Connecting...</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.twitterIcon}>🐦</Text>
+                  <Text style={styles.buttonText}>Continue with Twitter</Text>
+                </>
+              )}
             </View>
           </LinearGradient>
         </TouchableOpacity>
+
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity onPress={() => setError(null)} style={styles.retryButton}>
+              <Text style={styles.retryText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.featuresContainer}>
           <Text style={styles.featuresTitle}>What you get:</Text>
@@ -131,6 +296,9 @@ const styles = StyleSheet.create({
   loginButton: {
     width: '100%',
     marginBottom: 30,
+  },
+  loginButtonDisabled: {
+    opacity: 0.7,
   },
   gradient: {
     borderRadius: 12,
@@ -229,5 +397,29 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

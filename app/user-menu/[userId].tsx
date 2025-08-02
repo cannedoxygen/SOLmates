@@ -66,7 +66,7 @@ export default function UserMenuScreen() {
       loadUserProfile();
       checkBlockStatus();
     }
-  }, [userId, user]);
+  }, [userId, user?.id]);
 
   const loadUserProfile = async () => {
     if (!userId) return;

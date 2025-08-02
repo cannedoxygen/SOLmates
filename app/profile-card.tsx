@@ -42,7 +42,7 @@ export default function ProfileCard() {
     if (user) {
       loadUserProfile();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const loadUserProfile = async () => {
     if (!user) return;

@@ -585,6 +585,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     minHeight: 500,
+    // Enhanced liquid glass effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 32,
+    elevation: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   header: {
     flexDirection: 'row',
@@ -612,6 +620,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
+    // Liquid glass effect for input containers
+    shadowColor: '#9945FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   tokenSelector: {
     flexDirection: 'row',
@@ -688,11 +704,19 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   swapDetails: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
     marginBottom: 24,
+    // Liquid glass effect for details panel
+    shadowColor: '#14F195',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   detailRow: {
     flexDirection: 'row',
@@ -717,6 +741,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
+    // Enhanced liquid glass button effect
+    shadowColor: '#9945FF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 32,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   swapButtonDisabled: {
     opacity: 0.5,

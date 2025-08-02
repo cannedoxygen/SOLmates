@@ -2,6 +2,7 @@ import 'react-native-get-random-values';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
+import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -18,6 +19,13 @@ import { ProfileService } from '../lib/services/profileService';
 import { SessionManager } from '../lib/services/sessionManager';
 
 SplashScreen.preventAutoHideAsync();
+
+// Ignore Privy timeout warnings that don't affect functionality
+LogBox.ignoreLogs([
+  'Ping reached timeout',
+  'Embedded wallet proxy not initialized',
+  'Cannot connect to Metro',
+]);
 
 export default function RootLayout() {
   // const [fontsLoaded] = useFonts({
@@ -38,65 +46,38 @@ export default function RootLayout() {
     return null;
   }
 
-  // Debug Privy App ID
   const appId = process.env.EXPO_PUBLIC_PRIVY_APP_ID || 'cmcnu20ab02zgl10m45m4ev8q';
   const appSecret = process.env.EXPO_PUBLIC_PRIVY_APP_SECRET;
-  console.log('Privy App ID:', appId);
-  console.log('Privy App ID length:', appId.length);
-  console.log('Privy App Secret:', appSecret ? 'SET (length: ' + appSecret.length + ')' : 'MISSING');
-  console.log('🔍 All Privy Environment Variables:', {
-    appId: process.env.EXPO_PUBLIC_PRIVY_APP_ID,
-    appSecret: process.env.EXPO_PUBLIC_PRIVY_APP_SECRET ? 'SET' : 'MISSING',
-    projectId: process.env.EXPO_PUBLIC_PROJECT_ID
-  });
   
   return (
     <PrivyProvider
       appId={appId}
       clientId="client-WY6N4zWGmZ2dBNY18bizP18WW2McR1iLNSxMVsgMXDPZP"
       appSecret={appSecret}
-      onSuccess={async (user, isNewUser) => {
-        console.log('✅ Privy login successful:', user);
-        console.log('🆕 Is new user:', isNewUser);
-        
-        // Extract wallet address from linked accounts
-        const walletAccount = user.linked_accounts?.find(account => account.type === 'wallet');
-        const walletAddress = walletAccount?.address;
-        
-        console.log('🔄 Auto-syncing user with Supabase...');
-        try {
-          const supabaseProfile = await ProfileService.syncPrivyUser(user, walletAddress);
-          console.log('✅ User synced with Supabase:', supabaseProfile);
-          
-          // Start analytics session
-          const sessionManager = SessionManager.getInstance();
-          await sessionManager.startSession(user.id);
-        } catch (syncError) {
-          console.error('❌ Failed to sync user with Supabase:', syncError);
-        }
-      }}
       onError={(error) => {
-        console.error('❌ Privy error:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        console.error('🔍 Error in Provider - App ID being used:', appId);
-        console.error('🔍 Error in Provider - App Secret status:', appSecret ? 'SET' : 'MISSING');
+        console.error('Privy error:', error);
       }}
-      onReady={() => {
-        console.log('🚀 Privy is ready!');
-        console.log('🔍 Debug - App Bundle ID:', appId);
-        console.log('🔍 Debug - App Secret present:', !!appSecret);
-        console.log('🔍 Debug - Platform:', Platform.OS);
-        console.log('🔍 Debug - Bundle ID (should be com.solmates):', Application.androidId || Application.bundleId);
-      }}
+      onReady={() => {}}
       config={{
         appearance: {
           theme: 'dark',
           accentColor: '#9945FF',
         },
         loginMethods: ['twitter'],
-        // embeddedWallets: {
-        //   createOnLogin: 'users-without-wallets',
-        // },
+        embeddedWallets: {
+          createOnLogin: 'all-users',
+          solana: {
+            createOnLogin: 'all-users',
+            network: 'mainnet-beta',
+            noPromptOnSignature: false,
+          },
+        },
+        solanaClusters: [
+          {
+            name: 'mainnet-beta',
+            rpcUrl: process.env.EXPO_PUBLIC_RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com',
+          },
+        ],
       }}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>

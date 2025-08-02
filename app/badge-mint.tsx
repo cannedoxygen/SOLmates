@@ -140,6 +140,37 @@ export default function BadgeMint() {
             </Text>
           </View>
 
+          <Animated.View entering={FadeInUp.delay(100).duration(600)}>
+            <View style={styles.explanationSection}>
+              <View style={styles.explanationHeader}>
+                <Ionicons name="shield-checkmark" size={24} color="#4CAF50" />
+                <Text style={styles.explanationTitle}>Why Mint a Collab Badge?</Text>
+              </View>
+              <Text style={styles.explanationText}>
+                Solve the problem of "How do I prove I actually worked on this project with these people?" 
+                in a way that can't be disputed or faked.
+              </Text>
+              <View style={styles.benefitsList}>
+                <View style={styles.benefitItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                  <Text style={styles.benefitText}>Permanent blockchain proof of collaboration</Text>
+                </View>
+                <View style={styles.benefitItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                  <Text style={styles.benefitText}>Verifiable by teammates and employers</Text>
+                </View>
+                <View style={styles.benefitItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                  <Text style={styles.benefitText}>Build credible developer reputation</Text>
+                </View>
+                <View style={styles.benefitItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                  <Text style={styles.benefitText}>Soulbound NFT - can't be transferred or faked</Text>
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+
           <Animated.View entering={FadeInUp.delay(200).duration(600)}>
             <View style={styles.form}>
               <View style={styles.inputGroup}>
@@ -296,6 +327,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#B8B8B8',
+  },
+  explanationSection: {
+    backgroundColor: 'rgba(76, 175, 80, 0.05)',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.1)',
+  },
+  explanationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  explanationTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
+  },
+  explanationText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#B8B8B8',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  benefitsList: {
+    gap: 8,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  benefitText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
+    color: '#B8B8B8',
+    flex: 1,
   },
   form: {
     marginBottom: 32,

@@ -71,7 +71,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     loadSettings();
-  }, [user]);
+  }, [user?.id]);
 
   const loadSettings = async () => {
     if (!user) return;

@@ -33,7 +33,7 @@ export default function BlockedUsersScreen() {
     if (user) {
       loadBlockedUsers();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const loadBlockedUsers = async () => {
     if (!user) return;

@@ -148,7 +148,27 @@ export class PrivyWalletService {
       console.log('📡 SignAndSend response:', response);
 
       if (response && response.signature) {
-        console.log(`✅ Transaction sent and confirmed: ${response.signature}`);
+        console.log(`📡 Transaction sent: ${response.signature}`);
+        
+        // Wait for network confirmation with timeout
+        try {
+          console.log('⏳ Waiting for transaction confirmation...');
+          const confirmation = await connection.confirmTransaction({
+            signature: response.signature,
+            blockhash: transaction.recentBlockhash,
+            lastValidBlockHeight: transaction.lastValidBlockHeight
+          }, 'confirmed');
+          
+          if (confirmation.value.err) {
+            throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+          }
+          
+          console.log(`✅ Transaction confirmed: ${response.signature}`);
+        } catch (confirmError) {
+          console.log(`⚠️ Could not confirm transaction, but it was sent: ${confirmError.message}`);
+          // Don't throw error since transaction was sent successfully
+        }
+        
         return response.signature;
       }
 

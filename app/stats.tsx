@@ -35,7 +35,7 @@ export default function StatsScreen() {
     if (user) {
       loadUserStats();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const loadUserStats = async () => {
     if (!user) return;

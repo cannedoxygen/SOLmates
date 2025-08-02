@@ -35,7 +35,7 @@ export default function PremiumScreen() {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
   const loadUserLimits = async () => {
     if (!user) return;

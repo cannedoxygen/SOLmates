@@ -145,9 +145,22 @@ export function TipModal({
       
       onClose(); // Close modal even on error
       
+      // Provide more helpful error messages
+      let errorMessage = 'Unknown error occurred';
+      if (error.message?.includes('confirm')) {
+        errorMessage = 'Transaction was sent but confirmation timed out. Check your transaction history.';
+      } else if (error.message?.includes('insufficient')) {
+        errorMessage = 'Insufficient balance to complete the transaction.';
+      } else if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        errorMessage = 'Network error. Transaction may have been sent, please check your transaction history.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       Alert.alert(
-        'Error', 
-        `Failed to send tip: ${error.message || 'Unknown error'}. Please try again.`
+        'Transaction Status', 
+        errorMessage,
+        [{ text: 'OK', style: 'default' }]
       );
       
       // Reset state on error too
@@ -343,11 +356,14 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
     backgroundColor: '#1A1F3A',
     minHeight: 600,
-    elevation: 5,
+    // Enhanced liquid glass effect
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 32 },
     shadowOpacity: 0.3,
-    shadowRadius: 20,
+    shadowRadius: 64,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   modalContent: {
     flex: 1,
@@ -400,10 +416,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 2,
     borderColor: 'transparent',
+    // Liquid glass effect for tip options
+    shadowColor: '#9945FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 4,
   },
   tipOptionSelected: {
     borderColor: '#9945FF',
-    backgroundColor: 'rgba(153, 69, 255, 0.1)',
+    backgroundColor: 'rgba(153, 69, 255, 0.15)',
+    // Enhanced glow for selected state
+    shadowColor: '#9945FF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 32,
+    elevation: 8,
   },
   customOptionContainer: {
     width: '100%',
@@ -504,6 +532,14 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     marginBottom: 16,
     gap: 8,
+    // Enhanced liquid glass button effect
+    shadowColor: '#9945FF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 32,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   sendButtonDisabled: {
     opacity: 0.5,
