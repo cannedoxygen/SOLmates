@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1284" height="2778" viewBox="0 0 1284 2778" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="splashGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0A0E27;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1A1F3A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0A0E27;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9945FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#19FB9B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1284" height="2778" fill="url(#splashGradient)"/>
+  
+  <!-- App logo centered -->
+  <g transform="translate(642, 1389)">
+    <!-- Logo placeholder - adjust size as needed -->
+    <circle cx="0" cy="0" r="120" fill="url(#logoGradient)" opacity="0.9"/>
+    
+    <!-- App name -->
+    <text x="0" y="200" font-family="Arial, sans-serif" font-size="72" font-weight="bold" 
+          fill="white" text-anchor="middle" opacity="0.95">SOLMATES</text>
+    
+    <!-- Tagline -->
+    <text x="0" y="280" font-family="Arial, sans-serif" font-size="32" 
+          fill="white" text-anchor="middle" opacity="0.7">Find Your Code Mate</text>
+  </g>
+</svg>

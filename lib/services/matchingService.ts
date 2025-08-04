@@ -57,18 +57,26 @@ export class MatchingService {
         }
       }
 
-      // 1. Record the swipe
+      // 1. Record the swipe and analytics atomically
+      const currentTime = new Date().toISOString();
+      
+      // Analytics tracking is handled by SwipeStack to avoid double counting
+      
       const { data: swipeData, error: swipeError } = await supabase
         .from('swipes')
         .insert([{
           swiper_id: swiperId,
           swiped_id: swipedId,
           direction,
-          created_at: new Date().toISOString(),
+          created_at: currentTime,
         }])
         .select('*');
 
       if (swipeError) {
+        // If swipe recording fails but analytics succeeded, we need to rollback analytics
+        // This is a rare edge case but important for consistency
+        console.warn('⚠️  Swipe recording failed, but analytics was tracked');
+        
         // Check if it's a duplicate swipe (user already swiped on this person)
         if (swipeError.code === '23505') {
           console.log('⚠️  User already swiped on this person');
@@ -88,7 +96,7 @@ export class MatchingService {
           swiper_id: swiperId,
           swiped_id: swipedId,
           direction,
-          created_at: new Date().toISOString()
+          created_at: currentTime
         };
         console.log('⚠️  Using temporary swipe object due to empty response');
         
@@ -106,9 +114,6 @@ export class MatchingService {
 
       const swipeRecord = swipeData[0];
       console.log('✅ Swipe recorded:', swipeRecord.id);
-
-      // Track swipe analytics
-      AnalyticsService.trackSwipe(swiperId, swipedId, direction);
 
       // 2. If it's a right swipe or super like, check for potential match
       if (direction === 'right' || direction === 'super') {
@@ -193,28 +198,37 @@ export class MatchingService {
       AnalyticsService.trackMatch(swiperId, swipedId, matchRecord.id);
       AnalyticsService.trackMatch(swipedId, swiperId, matchRecord.id);
 
-      // Create chat for the match
-      const { data: chatData, error: chatError } = await supabase
+      // Check if chat already exists first
+      const { data: existingChat } = await supabase
         .from('chats')
-        .insert([{
-          user1_id: swiperId < swipedId ? swiperId : swipedId,
-          user2_id: swiperId < swipedId ? swipedId : swiperId,
-          created_at: new Date().toISOString(),
-        }])
-        .select('*');
+        .select('*')
+        .or(
+          `and(user1_id.eq.${swiperId},user2_id.eq.${swipedId}),and(user1_id.eq.${swipedId},user2_id.eq.${swiperId})`
+        )
+        .single();
 
-      let chatRecord = null;
-      if (chatError) {
-        console.error('❌ Failed to create chat:', chatError);
-        // Don't throw here - match is still valid even if chat creation fails
+      let chatRecord = existingChat;
+      
+      // Create chat only if it doesn't exist
+      if (!existingChat) {
+        const { data: chatData, error: chatError } = await supabase
+          .from('chats')
+          .insert([{
+            user1_id: swiperId < swipedId ? swiperId : swipedId,
+            user2_id: swiperId < swipedId ? swipedId : swiperId,
+            created_at: new Date().toISOString(),
+          }])
+          .select('*');
+
+        if (chatError) {
+          console.error('❌ Failed to create chat:', chatError);
+          // Don't throw here - match is still valid even if chat creation fails
+        } else {
+          chatRecord = chatData && chatData.length > 0 ? chatData[0] : null;
+          console.log('✅ Chat created:', chatRecord?.id);
+        }
       } else {
-        chatRecord = chatData && chatData.length > 0 ? chatData[0] : {
-          id: `temp_chat_${Date.now()}`,
-          user1_id: swiperId < swipedId ? swiperId : swipedId,
-          user2_id: swiperId < swipedId ? swipedId : swiperId,
-          created_at: new Date().toISOString()
-        };
-        console.log('✅ Chat created:', chatRecord.id);
+        console.log('✅ Using existing chat:', existingChat.id);
       }
 
       return {

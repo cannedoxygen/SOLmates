@@ -6,13 +6,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  useAnimatedStyle,
-  interpolate,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
 import { AchievementService, ACHIEVEMENT_DEFINITIONS } from '../../../lib/services/achievementService';
 
 interface UserProfile {
@@ -55,41 +48,13 @@ const EXPERIENCE_LEVELS = {
   'Expert': { color: '#9945FF', progress: 1.0 },
 };
 
-// Remove the hardcoded ACHIEVEMENTS array - will use dynamic data instead
-
 export function AboutMeCard({ userProfile }: AboutMeCardProps) {
   const [userAchievements, setUserAchievements] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(true);
-  
-  const progressAnimation = useSharedValue(0);
-  const skillAnimations = userProfile.skills.map(() => useSharedValue(0));
-  const achievementAnimations = Array.from({ length: 4 }, () => useSharedValue(0));
 
   useEffect(() => {
     loadUserAchievements();
   }, [userProfile.id]);
-
-  useEffect(() => {
-    // Animate progress ring
-    progressAnimation.value = withTiming(1, { duration: 1500 });
-    
-    // Stagger skill animations
-    skillAnimations.forEach((anim, index) => {
-      // Use setTimeout for staggered animations instead of delay
-      setTimeout(() => {
-        anim.value = withTiming(1, {
-          duration: 600,
-        });
-      }, index * 100);
-    });
-
-    // Animate achievements
-    achievementAnimations.forEach((anim, index) => {
-      setTimeout(() => {
-        anim.value = withTiming(1, { duration: 600 });
-      }, index * 150);
-    });
-  }, [userAchievements]);
 
   const loadUserAchievements = async () => {
     try {
@@ -97,7 +62,7 @@ export function AboutMeCard({ userProfile }: AboutMeCardProps) {
       const achievements = await AchievementService.getUserAchievementStatus(userProfile.id);
       setUserAchievements(achievements);
     } catch (error) {
-      console.error('Failed to load achievements:', error);
+      console.error('Failed to get user achievements:', error);
       setUserAchievements([]);
     } finally {
       setLoading(false);
@@ -111,41 +76,18 @@ export function AboutMeCard({ userProfile }: AboutMeCardProps) {
 
   const renderSkillPill = (skill: string, index: number) => {
     const iconName = SKILL_ICONS[skill] || SKILL_ICONS.default;
-    const animation = skillAnimations[index];
-    
-    const animatedStyle = useAnimatedStyle(() => {
-      const scale = interpolate(animation.value, [0, 1], [0.8, 1]);
-      const opacity = interpolate(animation.value, [0, 1], [0, 1]);
-      
-      return {
-        transform: [{ scale }],
-        opacity,
-      };
-    });
 
     return (
-      <Animated.View key={skill} style={[styles.skillPill, animatedStyle]}>
+      <View key={`${skill}-${index}`} style={styles.skillPill}>
         <View style={[styles.skillPillInner, { backgroundColor: 'rgba(153, 69, 255, 0.3)' }]}>
           <Ionicons name={iconName as any} size={16} color="#9945FF" />
           <Text style={styles.skillText}>{skill}</Text>
         </View>
-      </Animated.View>
+      </View>
     );
   };
 
   const renderAchievement = (achievement: any, index: number) => {
-    const animation = achievementAnimations[index];
-    
-    const animatedStyle = useAnimatedStyle(() => {
-      const translateY = interpolate(animation.value, [0, 1], [20, 0]);
-      const opacity = interpolate(animation.value, [0, 1], [0, 1]);
-      
-      return {
-        transform: [{ translateY }],
-        opacity,
-      };
-    });
-
     // Show different styles for earned vs unearned achievements
     const cardStyle = achievement.earned 
       ? { backgroundColor: achievement.color + '20' }
@@ -156,56 +98,33 @@ export function AboutMeCard({ userProfile }: AboutMeCardProps) {
       : { backgroundColor: '#666666' };
 
     return (
-      <Animated.View key={achievement.name} style={[styles.achievementItem, animatedStyle]}>
+      <View key={`${achievement.name}-${index}`} style={[styles.achievementItem]}>
         <View style={[styles.achievementCard, cardStyle]}>
           <View style={[styles.achievementIcon, iconStyle]}>
-            <Ionicons name={achievement.icon as any} size={16} color="#FFFFFF" />
-            {achievement.earned && (
-              <View style={styles.achievementBadge}>
-                <Ionicons name="checkmark" size={10} color="#FFFFFF" />
-              </View>
-            )}
+            <Ionicons 
+              name={achievement.icon as any} 
+              size={20} 
+              color={achievement.earned ? 'white' : '#CCCCCC'} 
+            />
           </View>
-          <View style={styles.achievementInfo}>
-            <Text style={[styles.achievementName, !achievement.earned && styles.unearnedText]}>
+          <View style={styles.achievementContent}>
+            <Text style={[styles.achievementName, { 
+              color: achievement.earned ? 'white' : '#AAAAAA' 
+            }]}>
               {achievement.name}
             </Text>
-            <Text style={[styles.achievementDescription, !achievement.earned && styles.unearnedText]}>
-              {achievement.earned && achievement.metadata
-                ? AchievementService.formatAchievementDescription(
-                    Object.keys(ACHIEVEMENT_DEFINITIONS).find(key => 
-                      ACHIEVEMENT_DEFINITIONS[key].name === achievement.name
-                    ) || 'unknown', 
-                    achievement.metadata
-                  )
-                : achievement.description
-              }
+            <Text style={[styles.achievementDescription, { 
+              color: achievement.earned ? '#CCCCCC' : '#777777' 
+            }]}>
+              {achievement.description}
             </Text>
-            {achievement.earned && achievement.earnedAt && (
-              <Text style={styles.earnedDate}>
-                Earned {new Date(achievement.earnedAt).toLocaleDateString()}
-              </Text>
-            )}
           </View>
+          {achievement.earned && (
+            <View style={styles.earnedBadge}>
+              <Ionicons name="checkmark-circle" size={16} color="#14F195" />
+            </View>
+          )}
         </View>
-      </Animated.View>
-    );
-  };
-
-  const renderInterestIcon = (interest: string, index: number) => {
-    const icons = ['game-controller', 'musical-notes', 'camera', 'book', 'airplane', 'fitness'];
-    const colors = ['#FF6B6B', '#FFD700', '#14F195', '#9945FF', '#FF8C42', '#6BCF7F'];
-    
-    return (
-      <View key={interest} style={[styles.interestItem, { backgroundColor: colors[index % colors.length] + '20' }]}>
-        <Ionicons 
-          name={icons[index % icons.length] as any} 
-          size={20} 
-          color={colors[index % colors.length]} 
-        />
-        <Text style={[styles.interestText, { color: colors[index % colors.length] }]}>
-          {interest}
-        </Text>
       </View>
     );
   };
@@ -213,96 +132,68 @@ export function AboutMeCard({ userProfile }: AboutMeCardProps) {
   const experienceLevel = getExperienceLevel();
 
   return (
-    <View style={[styles.card, { backgroundColor: 'rgba(25, 30, 50, 0.95)' }]}>
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.3)' }]} />
-      
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={[styles.headerIcon, { backgroundColor: '#9945FF' }]}>
-            <Ionicons name="person" size={24} color="#FFFFFF" />
-          </View>
-          <Text style={styles.headerTitle}>About Me</Text>
-        </View>
+    <View style={styles.card}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Bio Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>About</Text>
+        <Text style={styles.bioText}>{userProfile.bio}</Text>
+      </View>
 
-        {/* Bio Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bio</Text>
-          <View style={styles.bioContainer}>
-            <Text style={styles.bioText}>{userProfile.bio}</Text>
+      {/* Experience Level */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Experience Level</Text>
+        <View style={styles.experienceContainer}>
+          <View style={[styles.experienceBar, { backgroundColor: experienceLevel.color + '30' }]}>
+            <View 
+              style={[
+                styles.experienceProgress, 
+                { 
+                  width: `${experienceLevel.progress * 100}%`,
+                  backgroundColor: experienceLevel.color 
+                }
+              ]} 
+            />
           </View>
+          <Text style={[styles.experienceText, { color: experienceLevel.color }]}>
+            {userProfile.experience_level || 'Beginner'}
+          </Text>
         </View>
+      </View>
 
-        {/* Experience Level */}
-        {userProfile.experience_level && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Experience Level</Text>
-            <View style={styles.experienceContainer}>
-              <View style={styles.experienceInfo}>
-                <Text style={styles.experienceLevel}>{userProfile.experience_level}</Text>
-                <Text style={styles.experienceSubtext}>Professional Level</Text>
-              </View>
-              
-              <View style={styles.progressRingContainer}>
-                <Animated.View style={styles.progressRing}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        backgroundColor: experienceLevel.color,
-                        transform: [
-                          { rotate: `${experienceLevel.progress * 360}deg` }
-                        ]
-                      }
-                    ]}
-                  />
-                  <View style={styles.progressCenter}>
-                    <Text style={[styles.progressText, { color: experienceLevel.color }]}>
-                      {Math.round(experienceLevel.progress * 100)}%
-                    </Text>
-                  </View>
-                </Animated.View>
-              </View>
-            </View>
+      {/* Skills */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Skills</Text>
+        <View style={styles.skillsContainer}>
+          {userProfile.skills.map((skill, index) => renderSkillPill(skill, index))}
+        </View>
+      </View>
+
+      {/* Achievements */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Achievements</Text>
+        {loading ? (
+          <Text style={styles.loadingText}>Loading achievements...</Text>
+        ) : (
+          <View style={styles.achievementsContainer}>
+            {userAchievements.map((achievement, index) => renderAchievement(achievement, index))}
           </View>
         )}
+      </View>
 
-        {/* Skills Section */}
+      {/* Interests */}
+      {userProfile.interests && userProfile.interests.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Skills & Technologies</Text>
-          <View style={styles.skillsContainer}>
-            {userProfile.skills.map((skill, index) => renderSkillPill(skill, index))}
+          <Text style={styles.sectionTitle}>Interests</Text>
+          <View style={styles.interestsContainer}>
+            {userProfile.interests.map((interest, index) => (
+              <View key={interest} style={styles.interestTag}>
+                <Text style={styles.interestText}>{interest}</Text>
+              </View>
+            ))}
           </View>
         </View>
-
-        {/* Achievements Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Achievements</Text>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Loading achievements...</Text>
-            </View>
-          ) : (
-            <View style={styles.achievementsContainer}>
-              {userAchievements.map((achievement, index) => renderAchievement(achievement, index))}
-            </View>
-          )}
-        </View>
-
-        {/* Interests Section */}
-        {userProfile.interests && userProfile.interests.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Interests</Text>
-            <View style={styles.interestsContainer}>
-              {userProfile.interests.map((interest, index) => renderInterestIcon(interest, index))}
-            </View>
-          </View>
-        )}
+      )}
       </ScrollView>
     </View>
   );
@@ -310,116 +201,49 @@ export function AboutMeCard({ userProfile }: AboutMeCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     overflow: 'hidden',
+    backgroundColor: 'rgba(26, 31, 58, 0.95)', // Same dark background as main card
   },
-  scrollView: {
+  container: {
     flex: 1,
-  },
-  scrollContent: {
     padding: 20,
-    paddingBottom: 30,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  headerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#FFFFFF',
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Bold',
     color: '#FFFFFF',
-    marginBottom: 16,
-  },
-  bioContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 12,
   },
   bioText: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#E0E0E0',
     lineHeight: 24,
   },
   experienceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginTop: 8,
   },
-  experienceInfo: {
-    flex: 1,
+  experienceBar: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
   },
-  experienceLevel: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
+  experienceProgress: {
+    height: '100%',
+    borderRadius: 4,
   },
-  experienceSubtext: {
+  experienceText: {
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  progressRingContainer: {
-    marginLeft: 20,
-  },
-  progressRing: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  progressFill: {
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 4,
-    borderColor: 'transparent',
-  },
-  progressCenter: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(15, 20, 35, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  progressText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Inter-SemiBold',
+    textAlign: 'center',
   },
   skillsContainer: {
     flexDirection: 'row',
@@ -427,107 +251,81 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   skillPill: {
-    marginBottom: 8,
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   skillPillInner: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(153, 69, 255, 0.3)',
+    paddingVertical: 6,
+    gap: 6,
   },
   skillText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Inter-Medium',
     color: '#9945FF',
-    marginLeft: 6,
+  },
+  achievementsContainer: {
+    gap: 12,
+  },
+  achievementItem: {
+    width: '100%',
+  },
+  achievementCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  achievementIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  achievementContent: {
+    flex: 1,
+  },
+  achievementName: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 2,
+  },
+  achievementDescription: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+  },
+  earnedBadge: {
+    marginLeft: 8,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#AAAAAA',
+    textAlign: 'center',
+    paddingVertical: 20,
   },
   interestsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  interestItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  interestTag: {
+    backgroundColor: 'rgba(20, 241, 149, 0.2)',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 16,
-    marginBottom: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(20, 241, 149, 0.3)',
   },
   interestText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    marginLeft: 8,
-  },
-  achievementsContainer: {
-    gap: 8,
-  },
-  achievementItem: {},
-  achievementCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  achievementIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  achievementInfo: {
-    flex: 1,
-  },
-  achievementName: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  achievementDescription: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  achievementBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#4CAF50',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  unearnedText: {
-    color: 'rgba(255, 255, 255, 0.4)',
-  },
-  earnedDate: {
-    fontSize: 10,
-    fontFamily: 'Inter-Regular',
-    color: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 2,
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontFamily: 'Inter-Medium',
+    color: '#14F195',
   },
 });

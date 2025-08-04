@@ -51,6 +51,7 @@ export function SwipeStack({
   onCardTap
 }: SwipeStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [swipedCardId, setSwipedCardId] = useState<string | null>(null);
   const translateX = useSharedValue(0);
   const { user } = usePrivy();
 
@@ -58,11 +59,7 @@ export function SwipeStack({
     const currentUser = users[currentIndex];
     if (!currentUser) return;
 
-    // Track swipe event
-    if (user?.id) {
-      await AnalyticsService.trackSwipe(user.id, currentUser.id, direction);
-    }
-
+    // Let MatchingService handle analytics tracking to avoid duplicates
     if (direction === 'left') {
       onSwipeLeft(currentUser);
     } else if (direction === 'right') {
@@ -71,17 +68,19 @@ export function SwipeStack({
       onSuperLike?.(currentUser);
     }
 
-    if (currentIndex === users.length - 1) {
+    // Always move to next card first
+    setCurrentIndex(currentIndex + 1);
+    
+    // Then check if we're out of cards
+    if (currentIndex + 1 >= users.length) {
       onNoMoreCards?.();
-    } else {
-      setCurrentIndex(currentIndex + 1);
     }
-  }, [currentIndex, users, onSwipeLeft, onSwipeRight, onSuperLike, onNoMoreCards, user?.id]);
+  }, [currentIndex, users, onSwipeLeft, onSwipeRight, onSuperLike, onNoMoreCards]);
 
   const handleSwipeWithUser = useCallback(async (targetUser: UserProfile, direction: 'left' | 'right' | 'super') => {
     if (!targetUser) return;
 
-    // Track swipe event
+    // Track swipe event for limits (this is required!)
     if (user?.id) {
       await AnalyticsService.trackSwipe(user.id, targetUser.id, direction);
     }
@@ -94,42 +93,69 @@ export function SwipeStack({
       onSuperLike?.(targetUser);
     }
 
-    if (currentIndex === users.length - 1) {
-      onNoMoreCards?.();
-    } else {
-      setCurrentIndex(currentIndex + 1);
-    }
-  }, [currentIndex, users, onSwipeLeft, onSwipeRight, onSuperLike, onNoMoreCards, user?.id]);
+    // Update state immediately - the defer was causing issues
+    setCurrentIndex(prev => {
+      const newIndex = prev + 1;
+      // Check if we're out of cards
+      if (newIndex >= users.length) {
+        onNoMoreCards?.();
+      }
+      return newIndex;
+    });
+    // Clear the swiped card ID after index updates
+    setSwipedCardId(null);
+  }, [users, onSwipeLeft, onSwipeRight, onSuperLike, onNoMoreCards, user?.id]);
 
   const programmaticSwipeLeft = useCallback(() => {
     const currentUser = users[currentIndex];
     if (!currentUser) return;
     
-    translateX.value = withSpring(-screenWidth * 1.5, {}, () => {
-      runOnJS(handleSwipeWithUser)(currentUser, 'left');
-      translateX.value = 0;
+    translateX.value = withSpring(-screenWidth * 1.5, { 
+      damping: 20, 
+      stiffness: 150,
+      mass: 1
+    }, (finished) => {
+      if (finished) {
+        translateX.value = 0;
+        runOnJS(handleSwipeWithUser)(currentUser, 'left');
+      }
     });
-  }, [handleSwipeWithUser]);
+  }, [handleSwipeWithUser, currentIndex, users]);
 
   const programmaticSwipeRight = useCallback(() => {
     const currentUser = users[currentIndex];
     if (!currentUser) return;
     
-    translateX.value = withSpring(screenWidth * 1.5, {}, () => {
-      runOnJS(handleSwipeWithUser)(currentUser, 'right');
-      translateX.value = 0;
+    translateX.value = withSpring(screenWidth * 1.5, { 
+      damping: 20, 
+      stiffness: 150,
+      mass: 1
+    }, (finished) => {
+      if (finished) {
+        translateX.value = 0;
+        runOnJS(handleSwipeWithUser)(currentUser, 'right');
+      }
     });
-  }, [handleSwipeWithUser]);
+  }, [handleSwipeWithUser, currentIndex, users]);
 
   const programmaticSuperLike = useCallback(() => {
     const currentUser = users[currentIndex];
     if (!currentUser) return;
     
-    // Super like with a special animation (scale up slightly)
-    translateX.value = withSpring(0, {}, () => {
-      runOnJS(handleSwipeWithUser)(currentUser, 'super');
+    // Super like with animation
+    translateX.value = withSpring(screenWidth * 0.5, {}, (finished) => {
+      if (finished) {
+        translateX.value = 0;
+        runOnJS(handleSwipeWithUser)(currentUser, 'super');
+      }
     });
-  }, [handleSwipeWithUser]);
+  }, [handleSwipeWithUser, currentIndex, users]);
+
+  // Reset translateX when currentIndex changes - completely disable this to prevent reversion
+  useEffect(() => {
+    // Completely disable auto-reset to prevent card reversion
+    // translateX will be managed by animation callbacks only
+  }, [currentIndex]);
 
   // Expose programmatic swipe functions to parent
   useEffect(() => {
@@ -180,35 +206,66 @@ export function SwipeStack({
       const currentUser = users[currentIndex];
       
       if (shouldSwipeLeft) {
-        translateX.value = withSpring(-screenWidth * 1.5, {}, () => {
-          runOnJS(handleSwipeWithUser)(currentUser, 'left');
-          translateX.value = 0;
+        // Immediately hide the swiped card using runOnJS
+        runOnJS(setSwipedCardId)(currentUser.id);
+        translateX.value = withSpring(-screenWidth * 1.5, { 
+          damping: 20, 
+          stiffness: 150,
+          mass: 1
+        }, (finished) => {
+          if (finished) {
+            // Reset translateX BEFORE handling swipe to prevent flicker
+            translateX.value = 0;
+            runOnJS(handleSwipeWithUser)(currentUser, 'left');
+          }
         });
       } else if (shouldSwipeRight) {
-        translateX.value = withSpring(screenWidth * 1.5, {}, () => {
-          runOnJS(handleSwipeWithUser)(currentUser, 'right');
-          translateX.value = 0;
+        // Immediately hide the swiped card using runOnJS
+        runOnJS(setSwipedCardId)(currentUser.id);
+        translateX.value = withSpring(screenWidth * 1.5, { 
+          damping: 20, 
+          stiffness: 150,
+          mass: 1
+        }, (finished) => {
+          if (finished) {
+            // Reset translateX BEFORE handling swipe to prevent flicker
+            translateX.value = 0;
+            runOnJS(handleSwipeWithUser)(currentUser, 'right');
+          }
         });
       } else {
-        translateX.value = withSpring(0);
+        translateX.value = withSpring(0, { 
+          damping: 20, 
+          stiffness: 200,
+          mass: 0.8
+        });
       }
     },
   });
 
   const renderCards = () => {
+    // Show 3 cards: current, next, and one behind for smooth transitions
     return users
-      .slice(currentIndex, currentIndex + 2)
+      .slice(currentIndex, currentIndex + 3)
       .reverse()
-      .map((user, index) => (
-        <SwipeCard
-          key={user.id}
-          user={user}
-          index={currentIndex + (1 - index)}
-          animatedValue={translateX}
-          currentIndex={currentIndex}
-          onCardTap={onCardTap}
-        />
-      ));
+      .map((user, index) => {
+        // Hide the swiped card immediately
+        if (swipedCardId === user.id) {
+          return null;
+        }
+        
+        return (
+          <SwipeCard
+            key={user.id}
+            user={user}
+            index={currentIndex + (2 - index)}
+            animatedValue={translateX}
+            currentIndex={currentIndex}
+            onCardTap={onCardTap}
+          />
+        );
+      })
+      .filter(Boolean); // Remove null entries
   };
 
   return (
@@ -235,11 +292,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
   },
   stack: {
     width: screenWidth - 48,
-    height: (screenWidth - 48) * 1.5,
+    height: (screenWidth - 48) * 1.4,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
   },
 });

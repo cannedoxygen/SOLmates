@@ -1,5 +1,5 @@
 import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { PrivyWalletService } from './privyWalletService';
+import HybridWalletService from './hybridWalletService';
 
 // Ensure Buffer is available
 if (typeof global !== 'undefined' && !global.Buffer) {
@@ -143,27 +143,11 @@ export class SwapService {
 
       console.log('🔏 Signing swap transaction...');
 
-      // Check if wallet is valid
-      if (!PrivyWalletService.isValidWallet(walletInstance)) {
-        throw new Error('Invalid wallet instance or signing not available');
-      }
-
-      // Get provider
-      const provider = walletInstance.getProvider();
-      if (!provider) {
-        throw new Error('No provider available');
-      }
-
-      // Sign and send the versioned transaction
-      const response = await provider.request({
-        method: 'signAndSendTransaction',
-        params: {
-          transaction: Buffer.from(transaction.serialize()).toString('base64'),
-          connection: connection
-        }
-      });
-
-      const txHash = response.signature || response;
+      // Sign and send transaction using hybrid wallet service
+      const txHash = await HybridWalletService.signAndSendTransaction(
+        transaction,
+        connection
+      );
       console.log('✅ Swap transaction sent:', txHash);
       
       return txHash;

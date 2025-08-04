@@ -149,7 +149,7 @@ export class PremiumService {
       // Only consider premium if we actually have a subscription record
       const isPremium = !subError && !!subscription && subscription !== null;
 
-      // Get today's usage from analytics
+      // Get today's usage from analytics (primary count)
       const { data: todayEvents, error: eventsError } = await supabase
         .from('analytics_events')
         .select('event_type')
@@ -157,13 +157,42 @@ export class PremiumService {
         .gte('created_at', `${today}T00:00:00.000Z`)
         .lt('created_at', `${today}T23:59:59.999Z`);
 
-      const todaySwipes = todayEvents?.filter(e => 
+      const analyticsSwipes = todayEvents?.filter(e => 
         ['swipe_left', 'swipe_right'].includes(e.event_type)
       ).length || 0;
 
-      const todaySuperSwipes = todayEvents?.filter(e => 
+      const analyticsSuperSwipes = todayEvents?.filter(e => 
         e.event_type === 'super_swipe'
       ).length || 0;
+
+      // Get today's usage from swipes table (backup validation)
+      const { data: todaySwipesData, error: swipesError } = await supabase
+        .from('swipes')
+        .select('direction')
+        .eq('swiper_id', userId)
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lt('created_at', `${today}T23:59:59.999Z`);
+
+      const swipesTableSwipes = todaySwipesData?.filter(s => 
+        ['left', 'right'].includes(s.direction)
+      ).length || 0;
+
+      const swipesTableSuperSwipes = todaySwipesData?.filter(s => 
+        s.direction === 'super'
+      ).length || 0;
+
+      // Use the higher count to prevent bypass (more conservative approach)
+      const todaySwipes = Math.max(analyticsSwipes, swipesTableSwipes);
+      const todaySuperSwipes = Math.max(analyticsSuperSwipes, swipesTableSuperSwipes);
+
+      // Log discrepancies for debugging
+      if (analyticsSwipes !== swipesTableSwipes) {
+        console.warn('⚠️  Swipe count mismatch:', {
+          analyticsSwipes,
+          swipesTableSwipes,
+          usingCount: todaySwipes
+        });
+      }
 
       // Get available super swipes from purchases
       const { data: superSwipePurchases, error: purchaseError } = await supabase
@@ -430,6 +459,97 @@ export class PremiumService {
       console.log('✅ Cleared test super swipe purchases');
     } catch (error) {
       console.error('❌ Failed to clear test super swipes:', error);
+    }
+  }
+
+  /**
+   * Sync analytics and swipes tables to ensure consistency
+   */
+  static async syncSwipeTables(userId: string, date?: string): Promise<{ 
+    analyticsCount: number; 
+    swipesCount: number; 
+    synced: boolean;
+  }> {
+    try {
+      const targetDate = date || new Date().toISOString().split('T')[0];
+      console.log('🔄 Syncing swipe tables for user:', userId, 'date:', targetDate);
+      
+      // Get analytics events
+      const { data: analyticsEvents } = await supabase
+        .from('analytics_events')
+        .select('*')
+        .eq('user_id', userId)
+        .in('event_type', ['swipe_left', 'swipe_right', 'super_swipe'])
+        .gte('created_at', `${targetDate}T00:00:00.000Z`)
+        .lt('created_at', `${targetDate}T23:59:59.999Z`);
+
+      // Get swipes table data
+      const { data: swipesData } = await supabase
+        .from('swipes')
+        .select('*')
+        .eq('swiper_id', userId)
+        .gte('created_at', `${targetDate}T00:00:00.000Z`)
+        .lt('created_at', `${targetDate}T23:59:59.999Z`);
+
+      const analyticsCount = analyticsEvents?.length || 0;
+      const swipesCount = swipesData?.length || 0;
+
+      console.log('📊 Table comparison:', {
+        analyticsCount,
+        swipesCount,
+        difference: Math.abs(analyticsCount - swipesCount)
+      });
+
+      // If counts match, no sync needed
+      if (analyticsCount === swipesCount) {
+        console.log('✅ Tables are already in sync');
+        return { analyticsCount, swipesCount, synced: true };
+      }
+
+      // For safety, we only clear both tables and don't try to reconstruct
+      // This prevents data inconsistencies but requires manual intervention
+      console.warn('⚠️  Tables are out of sync. Manual review recommended.');
+      
+      return { analyticsCount, swipesCount, synced: false };
+    } catch (error) {
+      console.error('❌ Failed to sync swipe tables:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Emergency reset for swipe counts (clears both tables for date)
+   */
+  static async emergencyResetSwipes(userId: string, date?: string): Promise<void> {
+    try {
+      const targetDate = date || new Date().toISOString().split('T')[0];
+      console.log('🚨 Emergency reset for user:', userId, 'date:', targetDate);
+      
+      // Clear analytics events
+      const { error: analyticsError } = await supabase
+        .from('analytics_events')
+        .delete()
+        .eq('user_id', userId)
+        .in('event_type', ['swipe_left', 'swipe_right', 'super_swipe'])
+        .gte('created_at', `${targetDate}T00:00:00.000Z`)
+        .lt('created_at', `${targetDate}T23:59:59.999Z`);
+
+      if (analyticsError) throw analyticsError;
+
+      // Clear swipes table
+      const { error: swipesError } = await supabase
+        .from('swipes')
+        .delete()
+        .eq('swiper_id', userId)
+        .gte('created_at', `${targetDate}T00:00:00.000Z`)
+        .lt('created_at', `${targetDate}T23:59:59.999Z`);
+
+      if (swipesError) throw swipesError;
+
+      console.log('✅ Emergency reset complete - user has fresh swipes');
+    } catch (error) {
+      console.error('❌ Failed to perform emergency reset:', error);
+      throw error;
     }
   }
 }

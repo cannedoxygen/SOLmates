@@ -11,7 +11,7 @@ import {
   getAccount,
   createAssociatedTokenAccountInstruction,
 } from '@solana/spl-token';
-import { walletAdapter } from '../auth/wallet-adapter';
+import HybridWalletService from '../services/hybridWalletService';
 
 const BONK_MINT = new PublicKey('DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263');
 const BONK_DECIMALS = 5;
@@ -105,7 +105,7 @@ export class BonkTipService {
         // Note: In a real implementation, you'd add a memo instruction here
       }
 
-      const signature = await walletAdapter.signAndSendTransaction(transaction);
+      const signature = await HybridWalletService.signAndSendTransaction(transaction, this.connection);
       
       return {
         signature,

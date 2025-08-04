@@ -1,5 +1,5 @@
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { PrivyWalletService } from './privyWalletService';
+import HybridWalletService from './hybridWalletService';
 import { supabase } from '../supabase/client';
 import Constants from 'expo-constants';
 
@@ -201,14 +201,8 @@ export class SolPaymentService {
       }
 
       try {
-        // Check if wallet is valid
-        if (!PrivyWalletService.isValidWallet(walletInstance)) {
-          throw new Error('Invalid wallet instance or signing not available');
-        }
-
-        // Sign and send transaction using Privy wallet service
-        const txHash = await PrivyWalletService.signAndSendTransaction(
-          walletInstance,
+        // Sign and send transaction using hybrid wallet service
+        const txHash = await HybridWalletService.signAndSendTransaction(
           transaction,
           connection
         );

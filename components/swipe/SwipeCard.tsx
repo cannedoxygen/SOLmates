@@ -13,7 +13,7 @@ import { getHighResTwitterImage } from '../../lib/utils/imageUtils';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 48;
-const CARD_HEIGHT = CARD_WIDTH * 1.5;
+const CARD_HEIGHT = CARD_WIDTH * 1.4;
 
 interface UserProfile {
   id: string;
@@ -50,8 +50,9 @@ export function SwipeCard({ user, index, animatedValue, currentIndex, onCardTap 
   const animatedStyle = useAnimatedStyle(() => {
     const isTop = index === currentIndex;
     const isNext = index === currentIndex + 1;
+    const isThird = index === currentIndex + 2;
     
-    if (!isTop && !isNext) return { opacity: 0 };
+    if (!isTop && !isNext && !isThird) return { opacity: 0 };
 
     const translateX = isTop
       ? animatedValue.value
@@ -68,12 +69,9 @@ export function SwipeCard({ user, index, animatedValue, currentIndex, onCardTap 
           [0, 10],
           Extrapolate.CLAMP
         )
-      : interpolate(
-          Math.abs(animatedValue.value),
-          [0, screenWidth],
-          [10, 0],
-          Extrapolate.CLAMP
-        );
+      : isNext
+        ? 10 // Next card stays at fixed position
+        : 20; // Third card stays further back
 
     const scale = isTop
       ? interpolate(
@@ -82,12 +80,9 @@ export function SwipeCard({ user, index, animatedValue, currentIndex, onCardTap 
           [1, 0.95],
           Extrapolate.CLAMP
         )
-      : interpolate(
-          Math.abs(animatedValue.value),
-          [0, screenWidth],
-          [0.95, 1],
-          Extrapolate.CLAMP
-        );
+      : isNext
+        ? 0.95 // Next card stays at fixed scale
+        : 0.9; // Third card is smaller
 
     const rotate = isTop
       ? interpolate(
@@ -100,12 +95,9 @@ export function SwipeCard({ user, index, animatedValue, currentIndex, onCardTap 
 
     const opacity = isTop
       ? 1
-      : interpolate(
-          Math.abs(animatedValue.value),
-          [0, screenWidth * 0.5, screenWidth],
-          [0.5, 0.8, 1],
-          Extrapolate.CLAMP
-        );
+      : isNext
+        ? 0.8 // Next card stays at fixed opacity
+        : 0.3; // Third card is more transparent
 
     return {
       transform: [
@@ -118,23 +110,73 @@ export function SwipeCard({ user, index, animatedValue, currentIndex, onCardTap 
     };
   });
 
-  const likeOpacity = useAnimatedStyle(() => ({
-    opacity: interpolate(
+  const likeStyle = useAnimatedStyle(() => {
+    const isTop = index === currentIndex;
+    if (!isTop) return { opacity: 0 };
+
+    const opacity = interpolate(
       animatedValue.value,
       [0, screenWidth / 2],
       [0, 1],
       Extrapolate.CLAMP
-    ),
-  }));
+    );
 
-  const nopeOpacity = useAnimatedStyle(() => ({
-    opacity: interpolate(
+    const rotate = interpolate(
+      animatedValue.value,
+      [-screenWidth, 0, screenWidth],
+      [-15, 0, 15],
+      Extrapolate.CLAMP
+    );
+
+    const scale = interpolate(
+      animatedValue.value,
+      [0, screenWidth / 2],
+      [0.8, 1.1],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      opacity,
+      transform: [
+        { rotate: `${rotate + 15}deg` },
+        { scale }
+      ] as any,
+    };
+  });
+
+  const nopeStyle = useAnimatedStyle(() => {
+    const isTop = index === currentIndex;
+    if (!isTop) return { opacity: 0 };
+
+    const opacity = interpolate(
       animatedValue.value,
       [-screenWidth / 2, 0],
       [1, 0],
       Extrapolate.CLAMP
-    ),
-  }));
+    );
+
+    const rotate = interpolate(
+      animatedValue.value,
+      [-screenWidth, 0, screenWidth],
+      [-15, 0, 15],
+      Extrapolate.CLAMP
+    );
+
+    const scale = interpolate(
+      animatedValue.value,
+      [-screenWidth / 2, 0],
+      [1.1, 0.8],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      opacity,
+      transform: [
+        { rotate: `${rotate - 15}deg` },
+        { scale }
+      ] as any,
+    };
+  });
 
   // Get high-resolution image URL
   const highResAvatarUrl = getHighResTwitterImage(user.avatar_url) || user.avatar_url;
@@ -212,11 +254,11 @@ export function SwipeCard({ user, index, animatedValue, currentIndex, onCardTap 
           </View>
         </LinearGradient>
 
-        <Animated.View style={[styles.choiceContainer, styles.likeContainer, likeOpacity]}>
+        <Animated.View style={[styles.choiceContainer, styles.likeContainer, likeStyle]}>
           <Text style={styles.likeText}>COLLAB</Text>
         </Animated.View>
 
-        <Animated.View style={[styles.choiceContainer, styles.nopeContainer, nopeOpacity]}>
+        <Animated.View style={[styles.choiceContainer, styles.nopeContainer, nopeStyle]}>
           <Text style={styles.nopeText}>PASS</Text>
         </Animated.View>
       </View>
@@ -243,12 +285,13 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 3,
   },
   image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+    borderRadius: 20,
   },
   placeholderImage: {
     width: '100%',

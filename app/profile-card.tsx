@@ -1,6 +1,6 @@
 // Polyfills now handled globally in index.js
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator, Dimensions, ScrollView, Image } from 'react-native';
 // import * as Clipboard from 'expo-clipboard'; // Requires development build
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -235,7 +235,23 @@ export default function ProfileCard() {
             <Text style={styles.title}>Your Profile Card</Text>
             <Text style={styles.subtitle}>This is how others see you when swiping</Text>
           </View>
-          <View style={styles.backButton} />
+          <View style={styles.profileButton}>
+            {userProfile?.avatar_url || userProfile?.twitter_avatar_url ? (
+              <Image
+                source={{ 
+                  uri: userProfile.twitter_avatar_url || userProfile.avatar_url 
+                }}
+                style={styles.profileButtonImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.profileButtonImage, { backgroundColor: '#9945FF' }]}>
+                <Text style={styles.profileButtonText}>
+                  {userProfile?.username?.charAt(0)?.toUpperCase() || '?'}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Swipeable Cards Container */}
@@ -296,6 +312,27 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  profileButtonImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Bold',
+    color: '#FFFFFF',
   },
   headerCenter: {
     flex: 1,

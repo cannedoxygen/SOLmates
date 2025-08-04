@@ -1,0 +1,42 @@
+[
+  {
+    "username": "toly",
+    "display_name": "Toly",
+    "bio": "Co-Founder of Solana Labs. Award winning phone creator. NFA, don't trust me, mostly technical gibberish.",
+    "avatar_filename": "toly.jpg",
+    "skills": ["Blockchain", "Mobile Development", "Solana", "Hardware", "Product Design"],
+    "looking_for": ["Developer", "Designer", "Community Manager"],
+    "experience_level": "Expert",
+    "location": "Solana Beach, CA",
+    "website_url": "http://solanamobile.com",
+    "twitter_username": "aeyakovenko",
+    "swipe_on_canned_oxygen": true
+  },
+  {
+    "username": "mike_s",
+    "display_name": "Mike S",
+    "bio": "dev rel @ solana mobile | ex-SWE @ meta",
+    "avatar_filename": "mike.jpg",
+    "skills": ["Developer Relations", "Mobile Development", "Solana", "Software Engineering", "React Native"],
+    "looking_for": ["Developer", "Community Builder", "Content Creator"],
+    "experience_level": "Senior",
+    "location": "California",
+    "website_url": "https://docs.solanamobile.com",
+    "twitter_username": "somemobiledev",
+    "swipe_on_canned_oxygen": true
+  },
+  {
+    "username": "mert_helius",
+    "display_name": "mert | helius.dev",
+    "bio": "ceo @heliuslabs, ex @coinbase — Solana RPCs, APIs, trading infra: http://helius.dev — listen to me yap w smart ppl https://youtube.com/@AccelerateWithMert",
+    "avatar_filename": "mert.jpg",
+    "skills": ["Infrastructure", "RPC", "APIs", "Trading", "Solana", "Leadership"],
+    "looking_for": ["Developer", "Infrastructure Engineer", "Partner"],
+    "experience_level": "Expert",
+    "location": "San Francisco, CA",
+    "website_url": "https://helius.dev",
+    "twitter_username": "0xMert_",
+    "github_url": "https://github.com/helius-labs",
+    "swipe_on_canned_oxygen": true
+  }
+]

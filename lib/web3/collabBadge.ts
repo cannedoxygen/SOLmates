@@ -14,8 +14,12 @@ import {
   getAssociatedTokenAddress,
   MINT_SIZE,
 } from '@solana/spl-token';
-import { walletAdapter } from '../auth/wallet-adapter';
+import HybridWalletService from '../services/hybridWalletService';
 import { BN, Program, AnchorProvider, web3 } from '@coral-xyz/anchor';
+
+// Helius RPC connection
+const HELIUS_API_KEY = '99b7e94e-9dff-4de3-82ac-567bfbda369c';
+const connection = new Connection(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`, 'confirmed');
 
 // Program ID from lib.rs
 const COLLAB_BADGE_PROGRAM_ID = new PublicKey('8mJAkVVgBzD8VvKz5q9KP6XrY4nMbJuTZxGhKkEeHhzr');
@@ -48,14 +52,14 @@ export class CollabBadgeService {
   private programId: PublicKey;
 
   constructor() {
-    this.connection = walletAdapter.getConnection();
+    this.connection = connection;
     this.programId = COLLAB_BADGE_PROGRAM_ID;
   }
 
-  async mintCollabBadge(badgeData: CollabBadgeData): Promise<string | null> {
+  async mintCollabBadge(badgeData: CollabBadgeData, walletAddress?: string): Promise<string | null> {
     try {
-      const wallet = walletAdapter.getPublicKey();
-      if (!wallet) throw new Error('Wallet not connected');
+      if (!walletAddress) throw new Error('Wallet address required');
+      const wallet = new PublicKey(walletAddress);
 
       // Generate new mint keypair for the badge
       const badgeMint = web3.Keypair.generate();
@@ -152,7 +156,7 @@ export class CollabBadgeService {
       // Sign with badge mint keypair
       transaction.partialSign(badgeMint);
 
-      const signature = await walletAdapter.signAndSendTransaction(transaction);
+      const signature = await HybridWalletService.signAndSendTransaction(transaction, this.connection);
       
       // Store badge metadata
       await this.storeBadgeMetadata(badgeMint.publicKey.toString(), badgeData);
@@ -186,8 +190,7 @@ export class CollabBadgeService {
 
   async verifyCollaboration(badgeMint: string, verifierAddress: string): Promise<boolean> {
     try {
-      const wallet = walletAdapter.getPublicKey();
-      if (!wallet) throw new Error('Wallet not connected');
+      const wallet = new PublicKey(verifierAddress);
 
       // Find badge account PDA
       const [badgeAccount] = PublicKey.findProgramAddressSync(
@@ -206,7 +209,7 @@ export class CollabBadgeService {
 
       transaction.add(verifyInstruction);
 
-      await walletAdapter.signAndSendTransaction(transaction);
+      await HybridWalletService.signAndSendTransaction(transaction, this.connection);
       return true;
     } catch (error) {
       console.error('Failed to verify collaboration:', error);

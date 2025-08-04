@@ -12,9 +12,11 @@ import { supabase } from '../../lib/supabase/client';
 import { AnalyticsService } from '../../lib/services/analyticsService';
 import { PremiumService } from '../../lib/services/premiumService';
 import { notificationService } from '../../lib/services/notifications';
+import { MatchingService } from '../../lib/services/matchingService';
 import { glassEffects } from '../../lib/styles/glassEffects';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { getBestAvatarUrl } from '../../lib/utils/imageUtils';
+import { MatchModal } from '../../components/match/MatchModal';
 
 export default function Discover() {
   const insets = useSafeAreaInsets();
@@ -33,6 +35,8 @@ export default function Discover() {
   } | null>(null);
   const [showProfileViewer, setShowProfileViewer] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -173,20 +177,12 @@ export default function Discover() {
         return;
       }
       
-      // Record the swipe in Supabase
-      await supabase
-        .from('swipes')
-        .insert([{
-          swiper_id: currentUserProfile.id,
-          swiped_id: swipedUser.id,
-          direction: 'left',
-          created_at: new Date().toISOString(),
-        }]);
-        
-      // Track analytics
-      if (user?.id) {
-        await AnalyticsService.trackSwipe(user.id, swipedUser.id, 'left');
-      }
+      // Use MatchingService to record swipe
+      await MatchingService.recordSwipe(
+        currentUserProfile.id,
+        swipedUser.id,
+        'left'
+      );
     } catch (error) {
       console.error('Failed to record left swipe:', error);
     }
@@ -197,107 +193,18 @@ export default function Discover() {
     console.log('👉 Swiped right on:', swipedUser.username);
     
     try {
-      // Check if user can perform swipe
-      const canSwipe = await PremiumService.canPerformAction(user.id, 'swipe');
+      // Use MatchingService to record swipe and check for match
+      const result = await MatchingService.recordSwipe(
+        currentUserProfile.id,
+        swipedUser.id,
+        'right'
+      );
       
-      if (!canSwipe) {
-        const userLimits = await PremiumService.getUserLimits(user.id);
-        Alert.alert(
-          'Daily Swipe Limit Reached',
-          userLimits.is_premium 
-            ? 'You\'ve reached your daily swipe limit. Try again tomorrow!'
-            : 'You\'ve reached your free daily swipe limit (20). Upgrade to Premium for unlimited swipes!',
-          [
-            { text: 'OK', style: 'cancel' },
-            { 
-              text: userLimits.is_premium ? 'Got it' : 'Upgrade', 
-              onPress: () => {
-                if (!userLimits.is_premium) {
-                  router.push('/premium');
-                }
-              }
-            }
-          ]
-        );
-        return;
-      }
+      console.log('📊 Swipe result:', result);
       
-      // Record the swipe in Supabase
-      const { data: swipeData } = await supabase
-        .from('swipes')
-        .insert([{
-          swiper_id: currentUserProfile.id,
-          swiped_id: swipedUser.id,
-          direction: 'right',
-          created_at: new Date().toISOString(),
-        }])
-        .select();
-        
-      // Track analytics
-      if (user?.id) {
-        await AnalyticsService.trackSwipe(user.id, swipedUser.id, 'right');
-      }
-        
-      // Check if they swiped right on us
-      const { data: reciprocalSwipe } = await supabase
-        .from('swipes')
-        .select('*')
-        .eq('swiper_id', swipedUser.id)
-        .eq('swiped_id', currentUserProfile.id)
-        .eq('direction', 'right')
-        .single();
-        
-      if (reciprocalSwipe) {
-        // It's a match! Create the match record with proper liked fields
-        // Use consistent ordering to avoid duplicate matches with different user order
-        const user1_id = currentUserProfile.id < swipedUser.id ? currentUserProfile.id : swipedUser.id;
-        const user2_id = currentUserProfile.id < swipedUser.id ? swipedUser.id : currentUserProfile.id;
-        
-        // First check if match already exists
-        const { data: existingMatch } = await supabase
-          .from('matches')
-          .select('*')
-          .eq('user1_id', user1_id)
-          .eq('user2_id', user2_id)
-          .single();
-          
-        if (existingMatch) {
-          console.log('✅ Match already exists:', existingMatch.id);
-          // Still show the match alert since this is the first time this user is seeing it
-          Alert.alert(
-            "It's a Match! 🎉",
-            `You and ${swipedUser.username} liked each other!`,
-            [
-              { text: 'Keep Swiping', style: 'cancel' },
-              { text: 'Send Message', onPress: () => {
-                // Navigate to chat
-                console.log('💬 Opening chat with:', swipedUser.username);
-              }},
-            ]
-          );
-          return;
-        }
-        
-        const { data: match, error: matchError } = await supabase
-          .from('matches')
-          .insert([{
-            user1_id,
-            user2_id,
-            user1_liked: true,
-            user2_liked: true,
-            matched_at: new Date().toISOString(),
-          }])
-          .select();
-          
-        if (matchError) {
-          console.error('❌ Failed to create match:', matchError);
-          // Don't return here - still show the match notification to the user
-        }
-          
-        // Track match creation
-        if (user?.id && match?.[0]) {
-          await AnalyticsService.trackMatch(user.id, swipedUser.id, match[0].id);
-        }
+      // If there's a match, show the match modal
+      if (result.match) {
+        console.log('🎉 Match detected!', result.match);
         
         // Send match notifications to both users
         try {
@@ -319,23 +226,23 @@ export default function Discover() {
           }
         } catch (notificationError) {
           console.error('❌ Failed to send match notifications:', notificationError);
-          // Don't show error to user - notification failure shouldn't block the flow
         }
-          
-        Alert.alert(
-          "It's a Match! 🎉",
-          `You and ${swipedUser.username} liked each other!`,
-          [
-            { text: 'Keep Swiping', style: 'cancel' },
-            { text: 'Send Message', onPress: () => {
-              // Navigate to chat
-              console.log('💬 Opening chat with:', swipedUser.username);
-            }},
-          ]
-        );
+        
+        // Show enhanced match modal
+        console.log('🎯 Setting matched user:', swipedUser.username, 'Current user:', currentUserProfile.username);
+        setMatchedUser(swipedUser);
+        setShowMatchModal(true);
       }
     } catch (error) {
-      console.error('Failed to record right swipe:', error);
+      console.error('❌ Failed to record right swipe:', error);
+      
+      // Silently handle errors for demo
+      if (error.message?.includes('Daily swipe limit')) {
+        console.log('⚠️ Daily swipe limit reached');
+        // For demo, could auto-navigate to premium page without alert
+      } else if (error.message?.includes('Already swiped')) {
+        console.log('⚠️ User already swiped on this person');
+      }
     }
   };
 
@@ -348,25 +255,7 @@ export default function Discover() {
       const canSuperLike = await PremiumService.canPerformAction(user.id, 'super_swipe');
       
       if (!canSuperLike) {
-        const userLimits = await PremiumService.getUserLimits(user.id);
-        Alert.alert(
-          'No Super Swipes Left',
-          userLimits.is_premium 
-            ? `You've used all your super swipes for today! Premium users get 5 super swipes per day.`
-            : `You've used your daily super swipe! Upgrade to Premium for unlimited swipes or buy super swipe packs.`,
-          [
-            { text: 'Maybe Later', style: 'cancel' },
-            { 
-              text: userLimits.is_premium ? 'Wait for Tomorrow' : 'Buy More', 
-              onPress: () => {
-                if (!userLimits.is_premium) {
-                  // Navigate to premium screen - assuming router is available
-                  // router.push('/premium');
-                }
-              }
-            }
-          ]
-        );
+        console.log('⚠️ No super swipes left - silently skipping for demo');
         return;
       }
       
@@ -410,18 +299,9 @@ export default function Discover() {
           .single();
           
         if (existingMatch) {
-          console.log('✅ Match already exists:', existingMatch.id);
-          // Still show the match alert since this is the first time this user is seeing it
-          Alert.alert(
-            "Super Match! ⭐",
-            `Your Super Like matched with ${swipedUser.username}!`,
-            [
-              { text: 'Keep Swiping', style: 'cancel' },
-              { text: 'Send Message', onPress: () => {
-                console.log('💬 Opening chat with:', swipedUser.username);
-              }},
-            ]
-          );
+          console.log('✅ Super Match already exists:', existingMatch.id);
+          // For demo - just log, no modal
+          console.log(`🎉 Super Match with ${swipedUser.username}!`);
           return;
         }
         
@@ -469,16 +349,8 @@ export default function Discover() {
           // Don't show error to user - notification failure shouldn't block the flow
         }
           
-        Alert.alert(
-          "Super Match! ⭐",
-          `Your Super Like matched with ${swipedUser.username}!`,
-          [
-            { text: 'Keep Swiping', style: 'cancel' },
-            { text: 'Send Message', onPress: () => {
-              console.log('💬 Opening chat with:', swipedUser.username);
-            }},
-          ]
-        );
+        // For demo - just log super match, no modal
+        console.log(`🎉 Super Match with ${swipedUser.username}!`);
       } else {
         // Send super like notification to the recipient
         try {
@@ -498,11 +370,8 @@ export default function Discover() {
           // Don't show error to user - notification failure shouldn't block the flow
         }
         
-        Alert.alert(
-          "Super Like Sent! ⭐",
-          `${swipedUser.username} will be notified of your Super Like!`,
-          [{ text: 'Continue Swiping', style: 'default' }]
-        );
+        // For demo - just log super like sent, no modal
+        console.log(`⭐ Super Like sent to ${swipedUser.username}!`);
       }
     } catch (error) {
       console.error('Failed to record super like:', error);
@@ -647,6 +516,70 @@ export default function Discover() {
             setSelectedProfile(null);
             // Trigger the actual super like action
             handleSuperLike(userProfile);
+          }}
+        />
+      )}
+
+      {/* Enhanced Match Modal */}
+      {matchedUser && currentUserProfile && (
+        <MatchModal
+          visible={showMatchModal}
+          onClose={() => {
+            setShowMatchModal(false);
+            setMatchedUser(null);
+          }}
+          currentUser={{
+            id: currentUserProfile.id,
+            username: currentUserProfile.username || 'You',
+            avatar_url: getBestAvatarUrl(currentUserProfile.twitter_avatar_url, currentUserProfile.avatar_url)
+          }}
+          matchedUser={{
+            id: matchedUser.id,
+            username: matchedUser.username,
+            avatar_url: matchedUser.avatar_url
+          }}
+          onSendMessage={async () => {
+            setShowMatchModal(false);
+            setMatchedUser(null);
+            
+            try {
+              // Try to find existing chat first
+              const { data: existingChat } = await supabase
+                .from('chats')
+                .select('*')
+                .or(
+                  `and(user1_id.eq.${currentUserProfile.id},user2_id.eq.${matchedUser.id}),and(user1_id.eq.${matchedUser.id},user2_id.eq.${currentUserProfile.id})`
+                )
+                .single();
+              
+              if (existingChat) {
+                router.push(`/chat/${existingChat.id}`);
+              } else {
+                // Create new chat
+                const user1_id = currentUserProfile.id < matchedUser.id ? currentUserProfile.id : matchedUser.id;
+                const user2_id = currentUserProfile.id < matchedUser.id ? matchedUser.id : currentUserProfile.id;
+                
+                const { data: newChat } = await supabase
+                  .from('chats')
+                  .insert([{
+                    user1_id,
+                    user2_id,
+                    created_at: new Date().toISOString(),
+                  }])
+                  .select('*')
+                  .single();
+                
+                if (newChat) {
+                  router.push(`/chat/${newChat.id}`);
+                }
+              }
+            } catch (error) {
+              console.error('Failed to navigate to chat:', error);
+            }
+          }}
+          onKeepSwiping={() => {
+            setShowMatchModal(false);
+            setMatchedUser(null);
           }}
         />
       )}

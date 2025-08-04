@@ -3,6 +3,7 @@ import { AnalyticsService } from './analyticsService';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, createTransferInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import { PrivyWalletService } from './privyWalletService';
+import HybridWalletService from './hybridWalletService';
 
 // Ensure Buffer is available before any Solana operations
 if (typeof global !== 'undefined' && !global.Buffer) {
@@ -264,21 +265,15 @@ export class BonkTippingService {
 
       console.log(`💎 Transaction created, requesting signature...`);
 
-      // Sign and send transaction using Privy wallet
-      if (!walletInstance) {
-        throw new Error('Wallet instance required for signing');
-      }
-
-      // Sign transaction with Privy embedded wallet
+      // Sign and send transaction using Privy wallet directly
       console.log('💎 Signing transaction with Privy wallet...');
       
+      if (!walletInstance) {
+        throw new Error('Wallet instance is required for signing');
+      }
+      
       try {
-        // Check if wallet is valid
-        if (!PrivyWalletService.isValidWallet(walletInstance)) {
-          throw new Error('Invalid wallet instance or signing not available');
-        }
-
-        // Sign and send transaction using Privy wallet service
+        // Use Privy wallet directly - bypass hybrid service
         const txHash = await PrivyWalletService.signAndSendTransaction(
           walletInstance,
           transaction,
@@ -300,35 +295,7 @@ export class BonkTippingService {
         return txHash;
         
       } catch (signError) {
-        console.error('❌ Transaction signing/sending failed:', signError);
-        
-        // If Privy signing isn't available yet, fall back to simulation
-        if (signError.message?.includes('signing not available') || 
-            signError.message?.includes('signTransaction is not a function') ||
-            signError.message?.includes('signMessage is not a function')) {
-          console.log('⚠️ Privy wallet signing not available, using simulation mode');
-          
-          // Simulate transaction delay
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Generate realistic transaction hash
-          const mockTxHash = `bonk_sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          
-          // Update database with mock transaction hash
-          const { error } = await supabase
-            .from('bonk_tips')
-            .update({
-              transaction_hash: mockTxHash,
-              status: 'completed'
-            })
-            .eq('id', tipId);
-          
-          if (error) throw error;
-          
-          console.log(`✅ BONK transaction simulated: ${mockTxHash}`);
-          return mockTxHash;
-        }
-        
+        console.error('❌ Privy wallet transaction failed:', signError);
         throw signError;
       }
 

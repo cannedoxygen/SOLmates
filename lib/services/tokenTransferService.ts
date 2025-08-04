@@ -2,7 +2,7 @@ import { supabase } from '../supabase/client';
 import { AnalyticsService } from './analyticsService';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, createTransferInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
-import { PrivyWalletService } from './privyWalletService';
+import HybridWalletService from './hybridWalletService';
 
 // Ensure Buffer is available before any Solana operations
 if (typeof global !== 'undefined' && !global.Buffer) {
@@ -242,14 +242,8 @@ export class TokenTransferService {
       console.log('🪙 Signing transaction with Privy wallet...');
       
       try {
-        // Check if wallet is valid
-        if (!PrivyWalletService.isValidWallet(walletInstance)) {
-          throw new Error('Invalid wallet instance or signing not available');
-        }
-
-        // Sign and send transaction using Privy wallet service
-        const txHash = await PrivyWalletService.signAndSendTransaction(
-          walletInstance,
+        // Sign and send transaction using hybrid wallet service
+        const txHash = await HybridWalletService.signAndSendTransaction(
           transaction,
           connection
         );

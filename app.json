@@ -4,7 +4,7 @@
     "slug": "solmates",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app_icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash.png",
@@ -31,7 +31,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive_icon.png",
         "backgroundColor": "#0A0E27"
       },
       "package": "com.solmates",
@@ -90,6 +90,27 @@
           "data": {
             "scheme": "solmates",
             "path": "/oauth/callback"
+          }
+        },
+        {
+          "action": "VIEW",
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ],
+          "data": {
+            "scheme": "https",
+            "host": "solana.com"
+          }
+        },
+        {
+          "action": "VIEW",
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ],
+          "data": {
+            "scheme": "solana-wallet"
           }
         }
       ]
