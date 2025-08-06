@@ -385,12 +385,6 @@ export function MatchModal({
           <Text style={styles.matchMessage}>
             You and {matchedUser.username} like each other!
           </Text>
-          {/* Debug info - remove after fixing */}
-          {__DEV__ && (
-            <Text style={[styles.matchMessage, {fontSize: 10, opacity: 0.5}]}>
-              Current: {currentUser.username} | Matched: {matchedUser.username}
-            </Text>
-          )}
 
           {/* Action Buttons */}
           <Animated.View style={[styles.buttonsContainer, buttonsAnimatedStyle]}>

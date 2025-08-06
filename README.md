@@ -234,20 +234,11 @@ anchor verify <program-id>
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## About
 
-- **Documentation**: [docs.solmates.app](https://docs.solmates.app)
-- **Discord**: [discord.gg/solmates](https://discord.gg/solmates)
-- **Twitter**: [@solmates_app](https://twitter.com/solmates_app)
-- **Email**: support@solmates.app
-
-## Acknowledgments
-
-- Solana Foundation for Mobile SDK
-- Seeker for reputation data
-- Supabase for backend infrastructure
-- The amazing Solana developer community
+- **Website**: [www.solmates.wtf](https://www.solmates.wtf)
+- **Twitter**: [@SolmatesX](https://twitter.com/SolmatesX)
 
 ---
 
-Built with ❤️ for the Solana Mobile ecosystem
+Built by Canned Oxygen
