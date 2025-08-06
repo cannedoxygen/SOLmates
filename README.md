@@ -237,7 +237,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## About
 
 - **Website**: [www.solmates.wtf](https://www.solmates.wtf)
-- **Twitter**: [@SolmatesX](https://twitter.com/SolmatesX)
+- **Twitter**: [@SOLmatesSKR](https://twitter.com/SOLmatesSKR)
 
 ---
 
